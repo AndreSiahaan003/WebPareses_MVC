@@ -13,13 +13,13 @@
                         <form action="<?php echo BASE_URL; ?>/admin/auth" method="POST">
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" name="username" value="admin" required>
+                                <input type="text" class="form-control" id="username" name="username" value="" required>
                             </div>
 
                             <div class="mb-3">
                                 <label for="passwordInput" class="form-label">Password</label>
                                 <div class="input-group">
-                                    <input type="password" class="form-control" id="passwordInput" name="password" value="admin123" required>
+                                    <input type="password" class="form-control" id="passwordInput" name="password" value="" required>
                                     <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">
                                         <i class="bi bi-eye-slash" id="togglePasswordIcon"></i>
                                     </button>

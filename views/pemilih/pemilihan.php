@@ -242,11 +242,88 @@
     .hidden-counter {
         display: none;
     }
+
+    /* ... CSS SEBELUMNYA TETAP SAMA ... */
+
+    /* --- UPDATE: TAMPILAN HEADER LEBIH RAPI --- */
+    .welcome-banner {
+        background: white;
+        padding: 20px 20px;
+        /* Sedikit lebih lebar paddingnya */
+        margin-bottom: 20px;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+    }
+
+    .welcome-subtitle {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    /* Kotak khusus untuk aturan agar rapi */
+    .rules-box {
+        background-color: #f8f9fa;
+        /* Latar belakang abu tipis */
+        border-radius: 8px;
+        padding: 12px 15px;
+        text-align: left;
+        /* Teks aturan rata kiri */
+        display: inline-block;
+        /* Agar lebar menyesuaikan konten atau max-width */
+        width: 100%;
+        max-width: 600px;
+        /* Membatasi lebar agar tidak terlalu panjang di desktop */
+        border: 1px dashed #dee2e6;
+    }
+
+    .rules-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #495057;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .rules-list {
+        margin: 0;
+        padding-left: 20px;
+        /* Indentasi bullet point */
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .rules-list li {
+        margin-bottom: 4px;
+        /* Jarak antar poin */
+    }
+
+    .highlight-rule {
+        color: #dc3545;
+        font-weight: 600;
+    }
 </style>
 
 <div class="welcome-banner">
-    <h6 class="fw-bold text-dark mb-1">Halo, <?php echo htmlspecialchars($_SESSION['pemilih_nama']); ?></h6>
-    <small class="text-muted">Klik kategori di bawah untuk melihat & memilih calon.</small>
+    <h5 class="fw-bold text-dark mb-2">Halo, <?php echo htmlspecialchars($_SESSION['pemilih_nama']); ?></h5>
+    <span class="welcome-subtitle">
+        Silakan klik kategori di bawah untuk membuka dan memilih calon.
+    </span>
+    <div class="rules-box">
+        <span class="rules-title"><i class="bi bi-info-circle me-1"></i> Ketentuan Pemilihan:</span>
+        <ul class="rules-list">
+            <li>
+                <strong>Pareses:</strong> Wajib pilih minimal <span class="highlight-rule">1</span> & maksimal <span class="highlight-rule">16</span> calon.
+            </li>
+            <li>
+                <strong>Majelis:</strong> Wajib pilih tepat <span class="highlight-rule">15</span> calon.
+            </li>
+            <li>
+                <strong>BPK:</strong> Wajib pilih tepat <span class="highlight-rule">3</span> calon.
+            </li>
+        </ul>
+    </div>
 </div>
 
 <div class="container px-3">

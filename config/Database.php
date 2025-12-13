@@ -1,9 +1,9 @@
 <?php
 class Database
 {
-    private $host = '';
-    private $db_name = '';
-    private $username = '';
+    private $host = 'localhost';
+    private $db_name = 'database_pemilihan';
+    private $username = 'root';
     private $password = '';
     private $conn;
 
