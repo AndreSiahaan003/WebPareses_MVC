@@ -1,58 +1,68 @@
 <?php
 require_once __DIR__ . '/../models/Pemilih.php';
+require_once __DIR__ . '/../models/Vote.php'; // <--- [1] WAJIB ADA INI
 
 class PemilihController
 {
-    // --------------------------------------------------------------
-    // 1. FUNGSI INDEX (URL UTAMA) -> BERFUNGSI SEBAGAI RESET/LOGOUT
-    // --------------------------------------------------------------
-    // Diakses saat: Buka web pertama kali, atau orang lain ketik URL utama.
     public function index()
     {
-        // Mulai sesi hanya untuk menghancurkannya
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
         }
-
-        // HAPUS SEMUA SESI (Agar bersih untuk orang berikutnya)
         session_unset();
         session_destroy();
-
-        // Tampilkan View (Otomatis mode "Menunggu Scan" karena sesi kosong)
         $this->view('pemilih/registrasi');
     }
 
-    // --------------------------------------------------------------
-    // 2. FUNGSI WELCOME (HALAMAN MEMBER) -> REFRESH TETAP AMAN
-    // --------------------------------------------------------------
-    // Diakses saat: Redirect otomatis setelah Scan Barcode sukses.
+    // FUNGSI UTAMA (INIT)
     public function welcome()
     {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
         }
 
-        // CEK KEAMANAN 1: Apakah punya sesi login?
+        // 1. Cek Apakah Login
         if (!isset($_SESSION['pemilih_id'])) {
-            // Jika tidak punya sesi (coba nembak URL), lempar ke depan (Reset)
             header("Location: " . BASE_URL);
             exit();
         }
 
-        // CEK KEAMANAN 2: Apakah sudah pernah memilih?
         $pemilihModel = new Pemilih();
-        $userData = $pemilihModel->find($_SESSION['pemilih_id']);
+        $user = $pemilihModel->find($_SESSION['pemilih_id']);
 
-        // Jika user tidak ditemukan ATAU sudah vote (status=1)
-        if (!$userData || $userData['status_vote'] == 1) {
-            // Tendang keluar ke halaman Reset
+        if (!$user) {
             header("Location: " . BASE_URL);
             exit();
         }
 
-        // Jika lolos semua cek, Tampilkan View
-        // (Otomatis mode "Selamat Datang" karena sesi masih ada)
-        $this->view('pemilih/registrasi');
+        // -----------------------------------------------------------
+        // LOGIKA PENENTU HALAMAN
+        // -----------------------------------------------------------
+
+        // KASUS A: JIKA SUDAH MEMILIH (Status Vote = 1)
+        if ($user['status_vote'] == 1) {
+
+            // [2] PANGGIL MODEL VOTE
+            $voteModel = new Vote();
+
+            // [3] AMBIL DATA PILIHAN DARI DATABASE
+            // Fungsi ini harus ada di models/Vote.php
+            $daftar_pilihan = $voteModel->getPilihanByPemilih($_SESSION['pemilih_id']);
+
+            // [4] KIRIM DATA KE VIEW
+            $data = [
+                'pemilih' => $user,
+                'pilihan' => $daftar_pilihan // <--- INI KUNCINYA
+            ];
+
+            // TAMPILKAN HALAMAN TERIMA KASIH
+            // Pastikan nama filenya 'terima_kasih.php' di folder 'views/pemilih/'
+            $this->view('pemilih/terima_kasih', $data);
+        } else {
+            // KASUS B: JIKA BELUM MEMILIH
+            // Tampilkan halaman sambutan / scan
+            $this->view('pemilih/registrasi', ['pemilih' => $user]);
+        }
     }
 
     // Helper View

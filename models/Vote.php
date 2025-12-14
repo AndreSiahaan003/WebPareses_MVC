@@ -12,48 +12,36 @@ class Vote extends Model
             // 1. Mulai Transaksi Database
             $this->db->beginTransaction();
 
-            // ------------------------------------------------------------------
-            // [KEAMANAN KRITIS] CEK DAN KUNCI PEMILIH DI AWAL
-            // ------------------------------------------------------------------
-            // Kita mencoba update status menjadi 'Sudah Memilih' (1) DAN matikan Token (1).
-            // Syaratnya: status_vote harus masih 0.
-            // Jika baris yang terupdate = 0, berarti orang ini sudah duluan memilih di perangkat lain.
-
+            // Kunci Pemilih
             $stmtLock = $this->db->prepare("UPDATE pemilih SET status_vote = 1, token_used = 1 WHERE id = ? AND status_vote = 0");
             $stmtLock->execute([$pemilih_id]);
 
             if ($stmtLock->rowCount() == 0) {
-                // Batalkan semua, lempar error keras!
                 throw new Exception("DOUBLE VOTE DETECTED: Suara Anda sudah terekam dari perangkat lain.");
             }
 
-            // ------------------------------------------------------------------
-            // JIKA LOLOS (Baru pertama kali), LANJUT SIMPAN SUARA
-            // ------------------------------------------------------------------
-
-            // 2. Simpan Pareses (Looping)
+            // 2. Simpan Pareses
             $stmtPareses = $this->db->prepare("INSERT INTO vote_pareses (pemilih_id, calon_pareses_id) VALUES (?, ?)");
             foreach ($pareses_ids as $p_id) {
                 $stmtPareses->execute([$pemilih_id, $p_id]);
             }
 
-            // 3. Simpan Majelis (Looping)
+            // 3. Simpan Majelis (Perhatikan nama tabel: vote_majelis_pusat)
             $stmtMajelis = $this->db->prepare("INSERT INTO vote_majelis_pusat (pemilih_id, calon_majelis_pusat_id) VALUES (?, ?)");
             foreach ($majelis_ids as $m_id) {
                 $stmtMajelis->execute([$pemilih_id, $m_id]);
             }
 
-            // 4. Simpan BPK (Looping)
+            // 4. Simpan BPK
             $stmtBPK = $this->db->prepare("INSERT INTO vote_bpk (pemilih_id, calon_bpk_id) VALUES (?, ?)");
             foreach ($bpk_ids as $b_id) {
                 $stmtBPK->execute([$pemilih_id, $b_id]);
             }
 
-            // 5. Commit (Simpan Permanen)
+            // 5. Commit
             $this->db->commit();
             return true;
         } catch (Exception $e) {
-            // 6. Rollback (Batalkan SEMUA jika ada error)
             $this->db->rollBack();
             throw $e;
         }
@@ -61,14 +49,10 @@ class Vote extends Model
 
     /**
      * Mengambil Statistik Lengkap untuk Dashboard Admin
-     * Termasuk rincian per Unsur (Pendeta, Sintua, Jemaat)
      */
     public function getStats()
     {
         $stats = [];
-
-        // Query Helper untuk menghitung detail unsur (Pivot)
-        // Ini diperlukan agar Modal Popup di Dashboard Admin muncul angkanya
         $selectBreakdown = "
             COUNT(v.id) as jumlah_suara,
             SUM(IF(p.unsur = 'Pendeta', 1, 0)) as suara_pendeta,
@@ -77,7 +61,7 @@ class Vote extends Model
             SUM(IF(p.unsur LIKE 'Lembaga%' OR p.unsur LIKE 'Ketua%' OR p.unsur LIKE 'UNSUR%', 1, 0)) as suara_lembaga
         ";
 
-        // 1. STATISTIK PARESES
+        // 1. PARESES
         $stats['pareses'] = $this->db->query("
             SELECT c.nama, c.daerah, $selectBreakdown
             FROM calon_pareses c
@@ -87,7 +71,7 @@ class Vote extends Model
             ORDER BY jumlah_suara DESC
         ")->fetchAll(PDO::FETCH_ASSOC);
 
-        // 2. STATISTIK MAJELIS
+        // 2. MAJELIS
         $stats['majelis'] = $this->db->query("
             SELECT c.nama, c.keterangan, $selectBreakdown
             FROM calon_majelis_pusat c
@@ -97,7 +81,7 @@ class Vote extends Model
             ORDER BY jumlah_suara DESC
         ")->fetchAll(PDO::FETCH_ASSOC);
 
-        // 3. STATISTIK BPK
+        // 3. BPK
         $stats['bpk'] = $this->db->query("
             SELECT c.nama, c.keterangan, $selectBreakdown
             FROM calon_bpk c
@@ -108,5 +92,52 @@ class Vote extends Model
         ")->fetchAll(PDO::FETCH_ASSOC);
 
         return $stats;
+    }
+
+    // -------------------------------------------------------------------------
+    // [PERBAIKAN] FUNGSI AMBIL PILIHAN (SESUAI NAMA TABEL & KOLOM ANDA)
+    // -------------------------------------------------------------------------
+    public function getPilihanByPemilih($pemilih_id)
+    {
+        // 1. Ambil Data Pareses
+        // Perbaikan: 
+        // - Kolom join: v.calon_pareses_id (Bukan v.calon_id)
+        // - Kolom nama: c.nama (Bukan c.nama_calon) -> Kita alias-kan jadi nama_calon agar view tidak error
+        $stmt1 = $this->db->prepare("
+            SELECT c.nama as nama_calon, 'Pareses' as kategori 
+            FROM vote_pareses v 
+            JOIN calon_pareses c ON v.calon_pareses_id = c.id 
+            WHERE v.pemilih_id = :pid
+        ");
+        $stmt1->execute(['pid' => $pemilih_id]);
+        $pareses = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+        // 2. Ambil Data Majelis
+        // Perbaikan: 
+        // - Nama Tabel: vote_majelis_pusat & calon_majelis_pusat
+        // - Kolom join: v.calon_majelis_pusat_id
+        $stmt2 = $this->db->prepare("
+            SELECT c.nama as nama_calon, 'Majelis Pusat' as kategori 
+            FROM vote_majelis_pusat v 
+            JOIN calon_majelis_pusat c ON v.calon_majelis_pusat_id = c.id 
+            WHERE v.pemilih_id = :pid
+        ");
+        $stmt2->execute(['pid' => $pemilih_id]);
+        $majelis = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+        // 3. Ambil Data BPK
+        // Perbaikan:
+        // - Kolom join: v.calon_bpk_id
+        $stmt3 = $this->db->prepare("
+            SELECT c.nama as nama_calon, 'BPK' as kategori 
+            FROM vote_bpk v 
+            JOIN calon_bpk c ON v.calon_bpk_id = c.id 
+            WHERE v.pemilih_id = :pid
+        ");
+        $stmt3->execute(['pid' => $pemilih_id]);
+        $bpk = $stmt3->fetchAll(PDO::FETCH_ASSOC);
+
+        // Gabungkan
+        return array_merge($pareses, $majelis, $bpk);
     }
 }

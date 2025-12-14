@@ -1,9 +1,16 @@
 <?php
+// Pastikan memanggil Model yang dibutuhkan
+require_once __DIR__ . '/../models/Calon.php';
+require_once __DIR__ . '/../models/Vote.php';
+require_once __DIR__ . '/../models/Pemilih.php';
 
 class VoteController
 {
     public function __construct()
     {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
         if (!isset($_SESSION['pemilih_id'])) {
             header("Location: " . BASE_URL);
             exit();
@@ -17,51 +24,48 @@ class VoteController
         $data['majelis'] = $calonModel->getAllMajelisPusat();
         $data['bpk'] = $calonModel->getAllBPK();
 
-        // --- PERBAIKAN 1: BACA DATA LAMA (RE-POPULATE) ---
-        // Jangan di-unset! Ambil data dari sesi jika ada.
+        // Ambil data sesi jika ada (untuk repopulate jika kembali)
         $data['selected'] = $_SESSION['temp_vote'] ?? [
             'pareses' => [],
             'majelis' => [],
             'bpk' => []
         ];
-        
+
         $this->view('pemilih/pemilihan', $data);
     }
 
     public function submit()
     {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            
-            // Ambil data form
+
+            // --- [CRITICAL CHECK] ---
+            // Pastikan name="..." di HTML View Anda SAMA PERSIS dengan ini:
+            // name="pareses[]", name="majelis[]", name="bpk[]"
             $pareses_ids = $_POST['pareses'] ?? [];
             $majelis_ids = $_POST['majelis'] ?? [];
             $bpk_ids = $_POST['bpk'] ?? [];
 
-            // --- PERBAIKAN 2: SIMPAN KE SESI DULUAN ---
-            // Simpan data input ke session SEBELUM validasi.
-            // Supaya jika validasi gagal, centangan user tidak hilang saat kembali ke index.
+            // Simpan ke Sesi Sementara
             $_SESSION['temp_vote'] = [
-                'pareses' => $pareses_ids, 
-                'majelis' => $majelis_ids, 
-                'bpk' => $bpk_ids          
+                'pareses' => $pareses_ids,
+                'majelis' => $majelis_ids,
+                'bpk' => $bpk_ids
             ];
 
-            // --- BARU LAKUKAN VALIDASI ---
-            
             // 1. Validasi Pareses (Min 1, Max 16)
             if (count($pareses_ids) < 1 || count($pareses_ids) > 16) {
                 $this->setFlash('error', 'Pareses: Pilih minimal 1, maksimal 16 calon.');
                 header("Location: " . BASE_URL . "/vote");
                 return;
             }
-            
+
             // 2. Validasi Majelis (TEPAT 15)
             if (count($majelis_ids) !== 15) {
                 $this->setFlash('error', 'Majelis Pusat: Anda harus memilih TEPAT 15 calon.');
                 header("Location: " . BASE_URL . "/vote");
                 return;
             }
-            
+
             // 3. Validasi BPK (TEPAT 3)
             if (count($bpk_ids) !== 3) {
                 $this->setFlash('error', 'Badan Pemeriksa Keuangan: Anda harus memilih TEPAT 3 calon.');
@@ -69,13 +73,10 @@ class VoteController
                 return;
             }
 
-            // Jika lolos validasi, lanjut ke konfirmasi
             header("Location: " . BASE_URL . "/vote/confirm");
             exit();
         }
     }
-
-    // --- SISA FUNGSI DI BAWAH INI TETAP SAMA ---
 
     public function confirm()
     {
@@ -98,19 +99,20 @@ class VoteController
 
         try {
             $voteModel = new Vote();
+            // Simpan ke Database
             $voteModel->saveVote(
                 $pemilih_id,
-                $voteData['pareses'], 
-                $voteData['majelis'], 
+                $voteData['pareses'],
+                $voteData['majelis'],
                 $voteData['bpk']
             );
 
-            // Hapus sesi HANYA jika sudah sukses disimpan ke DB
+            // Hapus sesi temp_vote
             unset($_SESSION['temp_vote']);
 
+            // Redirect ke Thanks
             header("Location: " . BASE_URL . "/vote/thanks");
             exit();
-
         } catch (Exception $e) {
             $this->setFlash('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
             header("Location: " . BASE_URL . "/vote");
@@ -118,10 +120,28 @@ class VoteController
         }
     }
 
+    // --- [PERBAIKAN UTAMA ADA DI SINI] ---
     public function thanks()
     {
-        $this->view('pemilih/terima_kasih');
+        // Kita harus mengambil data lagi supaya bisa ditampilkan di Struk/PDF
+        $pemilihModel = new Pemilih();
+        $voteModel = new Vote();
+
+        // 1. Ambil Data Pemilih
+        $user = $pemilihModel->find($_SESSION['pemilih_id']);
+
+        // 2. Ambil Rincian Pilihan (Pareses, Majelis, BPK)
+        $daftar_pilihan = $voteModel->getPilihanByPemilih($_SESSION['pemilih_id']);
+
+        // 3. Kirim ke View
+        $data = [
+            'pemilih' => $user,
+            'pilihan' => $daftar_pilihan // <--- INI WAJIB ADA
+        ];
+
+        $this->view('pemilih/terima_kasih', $data);
     }
+    // -------------------------------------
 
     public function logout()
     {
@@ -133,7 +153,12 @@ class VoteController
     protected function view($view, $data = [])
     {
         extract($data);
-        $data['error'] = $this->getFlash('error'); 
+        if (isset($_SESSION['error'])) {
+            $error = $_SESSION['error'];
+            unset($_SESSION['error']);
+        }
+        // $data['error'] logic moved to direct extract or variable handling
+
         require_once "./views/layouts/header.php";
         require_once "./views/$view.php";
         require_once "./views/layouts/footer.php";
@@ -142,15 +167,5 @@ class VoteController
     protected function setFlash($key, $message)
     {
         $_SESSION[$key] = $message;
-    }
-
-    protected function getFlash($key)
-    {
-        if (isset($_SESSION[$key])) {
-            $message = $_SESSION[$key];
-            unset($_SESSION[$key]);
-            return $message;
-        }
-        return null;
     }
 }

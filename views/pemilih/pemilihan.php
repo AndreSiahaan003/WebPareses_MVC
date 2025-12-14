@@ -243,9 +243,7 @@
         display: none;
     }
 
-    /* ... CSS SEBELUMNYA TETAP SAMA ... */
 
-    /* --- UPDATE: TAMPILAN HEADER LEBIH RAPI --- */
     .welcome-banner {
         background: white;
         padding: 20px 20px;
