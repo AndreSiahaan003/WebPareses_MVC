@@ -117,7 +117,6 @@ class AdminController
                 $newId = $pemilihModel->create($nama, $unsur, $daerah_lembaga, $resortToSave);
 
                 if ($newId) {
-                    // Redirect ke halaman lihat QR
                     header("Location: " . BASE_URL . "/admin/viewQr/" . $newId);
                     exit();
                 }
@@ -233,7 +232,14 @@ class AdminController
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $calonModel = new Calon();
-            $calonModel->createPareses($_POST['nama'], $_POST['daerah']);
+            // Menangkap field baru
+            $calonModel->createPareses(
+                $_POST['nama'],
+                $_POST['daerah'],
+                $_POST['biodata'] ?? '',
+                $_POST['lama_jabatan'] ?? '',
+                $_POST['riwayat_kerja'] ?? ''
+            );
             $this->setFlash('message', 'Calon berhasil ditambahkan.');
             header("Location: " . BASE_URL . "/admin/pareses");
             exit();
@@ -251,7 +257,15 @@ class AdminController
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $calonModel = new Calon();
-            $calonModel->updatePareses($id, $_POST['nama'], $_POST['daerah']);
+            // Menangkap field baru
+            $calonModel->updatePareses(
+                $id,
+                $_POST['nama'],
+                $_POST['daerah'],
+                $_POST['biodata'] ?? '',
+                $_POST['lama_jabatan'] ?? '',
+                $_POST['riwayat_kerja'] ?? ''
+            );
             $this->setFlash('message', 'Calon berhasil diupdate.');
             header("Location: " . BASE_URL . "/admin/pareses");
             exit();
@@ -287,7 +301,14 @@ class AdminController
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $calonModel = new Calon();
-            $calonModel->createMajelisPusat($_POST['nama'], $_POST['keterangan']);
+            // Menangkap field baru
+            $calonModel->createMajelisPusat(
+                $_POST['nama'],
+                $_POST['keterangan'],
+                $_POST['biodata'] ?? '',
+                $_POST['lama_jabatan'] ?? '',
+                $_POST['riwayat_kerja'] ?? ''
+            );
             $this->setFlash('message', 'Calon berhasil ditambahkan.');
             header("Location: " . BASE_URL . "/admin/majelis");
             exit();
@@ -305,7 +326,15 @@ class AdminController
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $calonModel = new Calon();
-            $calonModel->updateMajelisPusat($id, $_POST['nama'], $_POST['keterangan']);
+            // Menangkap field baru
+            $calonModel->updateMajelisPusat(
+                $id,
+                $_POST['nama'],
+                $_POST['keterangan'],
+                $_POST['biodata'] ?? '',
+                $_POST['lama_jabatan'] ?? '',
+                $_POST['riwayat_kerja'] ?? ''
+            );
             $this->setFlash('message', 'Calon berhasil diupdate.');
             header("Location: " . BASE_URL . "/admin/majelis");
             exit();
@@ -341,7 +370,14 @@ class AdminController
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $calonModel = new Calon();
-            $calonModel->createBPK($_POST['nama'], $_POST['keterangan']);
+            // Menangkap field baru
+            $calonModel->createBPK(
+                $_POST['nama'],
+                $_POST['keterangan'],
+                $_POST['biodata'] ?? '',
+                $_POST['lama_jabatan'] ?? '',
+                $_POST['riwayat_kerja'] ?? ''
+            );
             $this->setFlash('message', 'Calon berhasil ditambahkan.');
             header("Location: " . BASE_URL . "/admin/bpk");
             exit();
@@ -359,7 +395,15 @@ class AdminController
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $calonModel = new Calon();
-            $calonModel->updateBPK($id, $_POST['nama'], $_POST['keterangan']);
+            // Menangkap field baru
+            $calonModel->updateBPK(
+                $id,
+                $_POST['nama'],
+                $_POST['keterangan'],
+                $_POST['biodata'] ?? '',
+                $_POST['lama_jabatan'] ?? '',
+                $_POST['riwayat_kerja'] ?? ''
+            );
             $this->setFlash('message', 'Calon berhasil diupdate.');
             header("Location: " . BASE_URL . "/admin/bpk");
             exit();

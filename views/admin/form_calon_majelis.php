@@ -9,26 +9,44 @@ $pageTitle = $isEdit ? 'Edit Calon Majelis Pusat' : 'Tambah Calon Majelis Pusat'
 
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow-sm">
+        <div class="card shadow-sm mb-5">
             <div class="card-body">
                 <?php if (isset($error)): ?>
                     <div class="alert alert-danger"><?php echo $error; ?></div>
                 <?php endif; ?>
 
                 <form action="<?php echo $formAction; ?>" method="POST">
+
                     <div class="mb-3">
-                        <label for="nama" class="form-label">Nama Calon</label>
+                        <label for="nama" class="form-label fw-bold">Nama Calon</label>
                         <input type="text" class="form-control" id="nama" name="nama" value="<?php echo $isEdit ? htmlspecialchars($calon['nama']) : ''; ?>" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="keterangan" class="form-label">Keterangan</label>
+                        <label for="keterangan" class="form-label fw-bold">Keterangan</label>
                         <input type="text" class="form-control" id="keterangan" name="keterangan" value="<?php echo $isEdit ? htmlspecialchars($calon['keterangan']) : ''; ?>" placeholder="Contoh: Pendeta / non Pendeta" required>
                     </div>
 
+                    <!-- TAMBAHAN FIELD PROFIL -->
+                    <div class="mb-3 border-top pt-3 mt-4">
+                        <label for="biodata" class="form-label fw-bold text-secondary">Biodata</label>
+                        <textarea class="form-control" id="biodata" name="biodata" rows="3" placeholder="Masukkan ringkasan biodata calon..."><?php echo $isEdit ? htmlspecialchars($calon['biodata'] ?? '') : ''; ?></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="lama_jabatan" class="form-label fw-bold text-secondary">Lama Jabatan</label>
+                        <input type="text" class="form-control" id="lama_jabatan" name="lama_jabatan" value="<?php echo $isEdit ? htmlspecialchars($calon['lama_jabatan'] ?? '') : ''; ?>" placeholder="Contoh: 2018 - 2024">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="riwayat_kerja" class="form-label fw-bold text-secondary">Riwayat Kerja</label>
+                        <textarea class="form-control" id="riwayat_kerja" name="riwayat_kerja" rows="4" placeholder="Masukkan riwayat pekerjaan atau pelayanan..."><?php echo $isEdit ? htmlspecialchars($calon['riwayat_kerja'] ?? '') : ''; ?></textarea>
+                    </div>
+                    <!-- END TAMBAHAN FIELD PROFIL -->
+
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary"><?php echo $isEdit ? 'Update Data' : 'Simpan Calon'; ?></button>
-                        <a href="<?php echo BASE_URL; ?>/admin/majelis" class="btn btn-secondary">Batal</a>
+                        <button type="submit" class="btn btn-primary px-4"><?php echo $isEdit ? 'Update Data' : 'Simpan Calon'; ?></button>
+                        <a href="<?php echo BASE_URL; ?>/admin/majelis" class="btn btn-secondary px-4">Batal</a>
                     </div>
                 </form>
             </div>

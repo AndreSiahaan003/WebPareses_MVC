@@ -1,7 +1,6 @@
 <?php
 class Calon extends Model
 {
-
     // --- CALON PARESES ---
     public function getAllPareses()
     {
@@ -14,15 +13,15 @@ class Calon extends Model
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-    public function createPareses($nama, $daerah)
+    public function createPareses($nama, $daerah, $biodata, $lama_jabatan, $riwayat_kerja)
     {
-        $stmt = $this->db->prepare("INSERT INTO calon_pareses (nama, daerah) VALUES (?, ?)");
-        return $stmt->execute([$nama, $daerah]);
+        $stmt = $this->db->prepare("INSERT INTO calon_pareses (nama, daerah, biodata, lama_jabatan, riwayat_kerja) VALUES (?, ?, ?, ?, ?)");
+        return $stmt->execute([$nama, $daerah, $biodata, $lama_jabatan, $riwayat_kerja]);
     }
-    public function updatePareses($id, $nama, $daerah)
+    public function updatePareses($id, $nama, $daerah, $biodata, $lama_jabatan, $riwayat_kerja)
     {
-        $stmt = $this->db->prepare("UPDATE calon_pareses SET nama = ?, daerah = ? WHERE id = ?");
-        return $stmt->execute([$nama, $daerah, $id]);
+        $stmt = $this->db->prepare("UPDATE calon_pareses SET nama = ?, daerah = ?, biodata = ?, lama_jabatan = ?, riwayat_kerja = ? WHERE id = ?");
+        return $stmt->execute([$nama, $daerah, $biodata, $lama_jabatan, $riwayat_kerja, $id]);
     }
     public function deletePareses($id)
     {
@@ -42,15 +41,15 @@ class Calon extends Model
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-    public function createMajelisPusat($nama, $keterangan)
+    public function createMajelisPusat($nama, $keterangan, $biodata, $lama_jabatan, $riwayat_kerja)
     {
-        $stmt = $this->db->prepare("INSERT INTO calon_majelis_pusat (nama, keterangan) VALUES (?, ?)");
-        return $stmt->execute([$nama, $keterangan]);
+        $stmt = $this->db->prepare("INSERT INTO calon_majelis_pusat (nama, keterangan, biodata, lama_jabatan, riwayat_kerja) VALUES (?, ?, ?, ?, ?)");
+        return $stmt->execute([$nama, $keterangan, $biodata, $lama_jabatan, $riwayat_kerja]);
     }
-    public function updateMajelisPusat($id, $nama, $keterangan)
+    public function updateMajelisPusat($id, $nama, $keterangan, $biodata, $lama_jabatan, $riwayat_kerja)
     {
-        $stmt = $this->db->prepare("UPDATE calon_majelis_pusat SET nama = ?, keterangan = ? WHERE id = ?");
-        return $stmt->execute([$nama, $keterangan, $id]);
+        $stmt = $this->db->prepare("UPDATE calon_majelis_pusat SET nama = ?, keterangan = ?, biodata = ?, lama_jabatan = ?, riwayat_kerja = ? WHERE id = ?");
+        return $stmt->execute([$nama, $keterangan, $biodata, $lama_jabatan, $riwayat_kerja, $id]);
     }
     public function deleteMajelisPusat($id)
     {
@@ -70,15 +69,15 @@ class Calon extends Model
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-    public function createBPK($nama, $keterangan)
+    public function createBPK($nama, $keterangan, $biodata, $lama_jabatan, $riwayat_kerja)
     {
-        $stmt = $this->db->prepare("INSERT INTO calon_bpk (nama, keterangan) VALUES (?, ?)");
-        return $stmt->execute([$nama, $keterangan]);
+        $stmt = $this->db->prepare("INSERT INTO calon_bpk (nama, keterangan, biodata, lama_jabatan, riwayat_kerja) VALUES (?, ?, ?, ?, ?)");
+        return $stmt->execute([$nama, $keterangan, $biodata, $lama_jabatan, $riwayat_kerja]);
     }
-    public function updateBPK($id, $nama, $keterangan)
+    public function updateBPK($id, $nama, $keterangan, $biodata, $lama_jabatan, $riwayat_kerja)
     {
-        $stmt = $this->db->prepare("UPDATE calon_bpk SET nama = ?, keterangan = ? WHERE id = ?");
-        return $stmt->execute([$nama, $keterangan, $id]);
+        $stmt = $this->db->prepare("UPDATE calon_bpk SET nama = ?, keterangan = ?, biodata = ?, lama_jabatan = ?, riwayat_kerja = ? WHERE id = ?");
+        return $stmt->execute([$nama, $keterangan, $biodata, $lama_jabatan, $riwayat_kerja, $id]);
     }
     public function deleteBPK($id)
     {

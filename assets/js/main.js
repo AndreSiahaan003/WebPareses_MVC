@@ -2,7 +2,6 @@
 
 document.addEventListener("DOMContentLoaded", function () {
   // I. LOGIKA FORM REGISTRASI DINAMIS (4 ATURAN UNSUR)
-
   const formRegistrasi = document.getElementById("formRegistrasi");
 
   if (formRegistrasi) {
@@ -12,10 +11,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const inputLembaga = document.getElementById("daerah_lembaga_lembaga");
 
     const groupDepartemen = document.getElementById(
-      "daerahLembagaGroup_Departemen"
+      "daerahLembagaGroup_Departemen",
     );
     const inputDepartemen = document.getElementById(
-      "daerah_lembaga_departemen"
+      "daerah_lembaga_departemen",
     );
 
     const groupText = document.getElementById("daerahLembagaGroup_Text");
@@ -98,47 +97,42 @@ document.addEventListener("DOMContentLoaded", function () {
     updateFormRules();
   }
 
-  // II. VALIDASI FORM PEMILIHAN (DENGAN PENGHITUNG JUMLAH)
-
+  // II. VALIDASI FORM PEMILIHAN (SUDAH DIPERBARUI UNTUK RADIO BUTTON)
   const formPemilihan = document.getElementById("formPemilihan");
   const alertBox = document.getElementById("validationAlert");
   const errorList = document.getElementById("validationList");
 
   if (formPemilihan) {
     formPemilihan.addEventListener("submit", function (e) {
-      // 1. Hitung jumlah yang dicentang
+      // 1. Hitung jumlah yang dipilih (berdasarkan name radio button tanpa [])
       const countPareses = document.querySelectorAll(
-        'input[name="pareses[]"]:checked'
+        'input[name="pareses"]:checked',
       ).length;
       const countMajelis = document.querySelectorAll(
-        'input[name="majelis[]"]:checked'
+        'input[name="majelis"]:checked',
       ).length;
       const countBpk = document.querySelectorAll(
-        'input[name="bpk[]"]:checked'
+        'input[name="bpk"]:checked',
       ).length;
 
       let errors = [];
 
-      // 2. Cek Aturan & Buat Pesan Error Spesifik
-      if (countPareses < 1) {
+      // 2. Cek Aturan (Semua Wajib 1)
+      if (countPareses === 0) {
         errors.push(
-          `<strong>Pareses:</strong> Belum ada yang dipilih. (Minimal 1)`
-        );
-      } else if (countPareses > 16) {
-        errors.push(
-          `<strong>Pareses:</strong> Maksimal 16 calon. (Anda memilih <strong>${countPareses}</strong>)`
+          `<strong>Pareses:</strong> Anda belum memilih. (Wajib pilih 1)`,
         );
       }
 
-      if (countMajelis !== 15) {
+      if (countMajelis === 0) {
         errors.push(
-          `<strong>Majelis Pusat:</strong> Harus TEPAT 15 calon. (Anda memilih <strong>${countMajelis}</strong>)`
+          `<strong>Majelis Pusat:</strong> Anda belum memilih. (Wajib pilih 1)`,
         );
       }
 
-      if (countBpk !== 3) {
+      if (countBpk === 0) {
         errors.push(
-          `<strong>BPK:</strong> Harus TEPAT 3 calon. (Anda memilih <strong>${countBpk}</strong>)`
+          `<strong>BPK:</strong> Anda belum memilih. (Wajib pilih 1)`,
         );
       }
 
@@ -158,7 +152,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
           alert(
             "Mohon lengkapi pilihan Anda:\n" +
-              errors.join("\n").replace(/<[^>]*>?/gm, "")
+              errors.join("\n").replace(/<[^>]*>?/gm, ""),
           );
         }
         return false;

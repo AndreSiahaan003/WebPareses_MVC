@@ -25,10 +25,11 @@ class VoteController
         $data['bpk'] = $calonModel->getAllBPK();
 
         // Ambil data sesi jika ada (untuk repopulate jika kembali)
+        // [PERUBAHAN]: Default array kosong diubah menjadi null karena sekarang menggunakan radio button
         $data['selected'] = $_SESSION['temp_vote'] ?? [
-            'pareses' => [],
-            'majelis' => [],
-            'bpk' => []
+            'pareses' => null,
+            'majelis' => null,
+            'bpk' => null
         ];
 
         $this->view('pemilih/pemilihan', $data);
@@ -38,37 +39,36 @@ class VoteController
     {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-            // --- [CRITICAL CHECK] ---
-            // Pastikan name="..." di HTML View Anda SAMA PERSIS dengan ini:
-            // name="pareses[]", name="majelis[]", name="bpk[]"
-            $pareses_ids = $_POST['pareses'] ?? [];
-            $majelis_ids = $_POST['majelis'] ?? [];
-            $bpk_ids = $_POST['bpk'] ?? [];
+            // --- [PERUBAHAN CRITICAL] ---
+            // Data POST sekarang berupa ID tunggal (String), bukan Array lagi
+            $pareses_id = $_POST['pareses'] ?? null;
+            $majelis_id = $_POST['majelis'] ?? null;
+            $bpk_id = $_POST['bpk'] ?? null;
 
             // Simpan ke Sesi Sementara
             $_SESSION['temp_vote'] = [
-                'pareses' => $pareses_ids,
-                'majelis' => $majelis_ids,
-                'bpk' => $bpk_ids
+                'pareses' => $pareses_id,
+                'majelis' => $majelis_id,
+                'bpk' => $bpk_id
             ];
 
-            // 1. Validasi Pareses (Min 1, Max 16)
-            if (count($pareses_ids) < 1 || count($pareses_ids) > 16) {
-                $this->setFlash('error', 'Pareses: Pilih minimal 1, maksimal 16 calon.');
+            // 1. Validasi Pareses (Wajib 1)
+            if (empty($pareses_id)) {
+                $this->setFlash('error', 'Pareses: Anda harus memilih 1 calon.');
                 header("Location: " . BASE_URL . "/vote");
                 return;
             }
 
-            // 2. Validasi Majelis (TEPAT 15)
-            if (count($majelis_ids) !== 15) {
-                $this->setFlash('error', 'Majelis Pusat: Anda harus memilih TEPAT 15 calon.');
+            // 2. Validasi Majelis (Wajib 1)
+            if (empty($majelis_id)) {
+                $this->setFlash('error', 'Majelis Pusat: Anda harus memilih 1 calon.');
                 header("Location: " . BASE_URL . "/vote");
                 return;
             }
 
-            // 3. Validasi BPK (TEPAT 3)
-            if (count($bpk_ids) !== 3) {
-                $this->setFlash('error', 'Badan Pemeriksa Keuangan: Anda harus memilih TEPAT 3 calon.');
+            // 3. Validasi BPK (Wajib 1)
+            if (empty($bpk_id)) {
+                $this->setFlash('error', 'Badan Pemeriksa Keuangan: Anda harus memilih 1 calon.');
                 header("Location: " . BASE_URL . "/vote");
                 return;
             }
@@ -99,12 +99,16 @@ class VoteController
 
         try {
             $voteModel = new Vote();
-            // Simpan ke Database
+
+            // --- [PERUBAHAN CRITICAL] ---
+            // Karena sebelumnya Model (saveVote) dirancang menerima ARRAY (banyak ID), 
+            // kita bungkus ID tunggal tersebut dengan kurung siku [...] menjadi Array 
+            // agar Model lama Anda tidak error saat melakukan foreach.
             $voteModel->saveVote(
                 $pemilih_id,
-                $voteData['pareses'],
-                $voteData['majelis'],
-                $voteData['bpk']
+                [$voteData['pareses']], // Dibungkus array
+                [$voteData['majelis']], // Dibungkus array
+                [$voteData['bpk']]      // Dibungkus array
             );
 
             // Hapus sesi temp_vote
@@ -120,7 +124,6 @@ class VoteController
         }
     }
 
-    // --- [PERBAIKAN UTAMA ADA DI SINI] ---
     public function thanks()
     {
         // Kita harus mengambil data lagi supaya bisa ditampilkan di Struk/PDF
@@ -136,12 +139,11 @@ class VoteController
         // 3. Kirim ke View
         $data = [
             'pemilih' => $user,
-            'pilihan' => $daftar_pilihan // <--- INI WAJIB ADA
+            'pilihan' => $daftar_pilihan
         ];
 
         $this->view('pemilih/terima_kasih', $data);
     }
-    // -------------------------------------
 
     public function logout()
     {
@@ -157,7 +159,6 @@ class VoteController
             $error = $_SESSION['error'];
             unset($_SESSION['error']);
         }
-        // $data['error'] logic moved to direct extract or variable handling
 
         require_once "./views/layouts/header.php";
         require_once "./views/$view.php";

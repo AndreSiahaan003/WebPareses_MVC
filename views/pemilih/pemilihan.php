@@ -28,7 +28,6 @@
         background: white;
         border-radius: 16px;
         overflow: hidden;
-        /* Agar konten tidak bocor saat ditutup */
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         border: 1px solid #eee;
     }
@@ -37,7 +36,6 @@
     .accordion-header {
         padding: 20px;
         cursor: pointer;
-        /* Menandakan bisa diklik */
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -112,7 +110,6 @@
     /* --- KONTEN CALON (ISI) --- */
     .accordion-body {
         display: none;
-        /* DEFAULT SEMBUNYI */
         padding: 20px;
         border-top: 1px solid #f0f0f0;
         animation: slideDown 0.3s ease-out;
@@ -130,7 +127,6 @@
         }
     }
 
-    /* Class untuk membuka */
     .accordion-open .accordion-body {
         display: block;
     }
@@ -139,14 +135,11 @@
         transform: rotate(180deg);
     }
 
-    /* Putar panah */
-
     /* --- KARTU CALON --- */
     .card-candidate {
         border: 1px solid #e0e0e0;
         border-radius: 12px;
         background: #fff;
-        cursor: pointer;
         position: relative;
         overflow: hidden;
         height: 100%;
@@ -163,6 +156,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        cursor: pointer;
     }
 
     .candidate-name {
@@ -178,7 +172,7 @@
         color: #777;
     }
 
-    .candidate-checkbox {
+    .candidate-input {
         position: absolute;
         opacity: 0;
         width: 0;
@@ -186,19 +180,19 @@
     }
 
     /* Efek Checked */
-    .section-pareses .candidate-checkbox:checked+.card-candidate {
+    .section-pareses .candidate-input:checked+.card-candidate {
         background-color: #e7f1ff;
         border-color: var(--color-pareses);
         box-shadow: 0 0 0 2px var(--color-pareses) inset;
     }
 
-    .section-majelis .candidate-checkbox:checked+.card-candidate {
+    .section-majelis .candidate-input:checked+.card-candidate {
         background-color: #fff9db;
         border-color: var(--color-majelis);
         box-shadow: 0 0 0 2px var(--color-majelis) inset;
     }
 
-    .section-bpk .candidate-checkbox:checked+.card-candidate {
+    .section-bpk .candidate-input:checked+.card-candidate {
         background-color: #d1e7dd;
         border-color: var(--color-bpk);
         box-shadow: 0 0 0 2px var(--color-bpk) inset;
@@ -207,14 +201,14 @@
     .check-icon {
         display: none;
         position: absolute;
-        top: 50%;
+        top: 25px;
+        /* Disesuaikan agar ikon tidak tertutup dropdown */
         right: 20px;
-        transform: translateY(-50%);
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         z-index: 10;
     }
 
-    .candidate-checkbox:checked+.card-candidate .check-icon {
+    .candidate-input:checked+.card-candidate .check-icon {
         display: block;
     }
 
@@ -243,11 +237,9 @@
         display: none;
     }
 
-
     .welcome-banner {
         background: white;
         padding: 20px 20px;
-        /* Sedikit lebih lebar paddingnya */
         margin-bottom: 20px;
         border-bottom: 1px solid #eee;
         text-align: center;
@@ -260,19 +252,14 @@
         display: block;
     }
 
-    /* Kotak khusus untuk aturan agar rapi */
     .rules-box {
         background-color: #f8f9fa;
-        /* Latar belakang abu tipis */
         border-radius: 8px;
         padding: 12px 15px;
         text-align: left;
-        /* Teks aturan rata kiri */
         display: inline-block;
-        /* Agar lebar menyesuaikan konten atau max-width */
         width: 100%;
         max-width: 600px;
-        /* Membatasi lebar agar tidak terlalu panjang di desktop */
         border: 1px dashed #dee2e6;
     }
 
@@ -287,14 +274,12 @@
     .rules-list {
         margin: 0;
         padding-left: 20px;
-        /* Indentasi bullet point */
         font-size: 0.85rem;
         color: #6c757d;
     }
 
     .rules-list li {
         margin-bottom: 4px;
-        /* Jarak antar poin */
     }
 
     .highlight-rule {
@@ -311,15 +296,9 @@
     <div class="rules-box">
         <span class="rules-title"><i class="bi bi-info-circle me-1"></i> Ketentuan Pemilihan:</span>
         <ul class="rules-list">
-            <li>
-                <strong>Pareses:</strong> Wajib pilih minimal <span class="highlight-rule">1</span> & maksimal <span class="highlight-rule">16</span> calon.
-            </li>
-            <li>
-                <strong>Majelis:</strong> Wajib pilih tepat <span class="highlight-rule">15</span> calon.
-            </li>
-            <li>
-                <strong>BPK:</strong> Wajib pilih tepat <span class="highlight-rule">3</span> calon.
-            </li>
+            <li><strong>Pareses:</strong> Wajib pilih tepat <span class="highlight-rule">1</span> calon.</li>
+            <li><strong>Majelis Pusat:</strong> Wajib pilih tepat <span class="highlight-rule">1</span> calon.</li>
+            <li><strong>BPK:</strong> Wajib pilih tepat <span class="highlight-rule">1</span> calon.</li>
         </ul>
     </div>
 </div>
@@ -342,14 +321,15 @@
         <span id="count-majelis" class="hidden-counter">0</span>
         <span id="count-bpk" class="hidden-counter">0</span>
 
+        <!-- PARESES -->
         <div class="section-container section-pareses" id="acc-pareses">
             <div class="accordion-header" onclick="toggleAccordion('acc-pareses')">
                 <div>
                     <h5 class="cat-title text-primary">PARESES</h5>
-                    <span class="cat-subtitle">Min 1 - Max 16 Calon</span>
+                    <span class="cat-subtitle">Wajib Pilih 1 Calon</span>
                 </div>
                 <div class="d-flex align-items-center">
-                    <span class="counter-badge badge-pareses"><span id="badge-pareses">0</span>/16</span>
+                    <span class="counter-badge badge-pareses"><span id="badge-pareses">0</span>/1</span>
                     <i class="bi bi-chevron-down toggle-icon"></i>
                 </div>
             </div>
@@ -357,33 +337,55 @@
             <div class="accordion-body">
                 <div class="row g-3">
                     <?php foreach ($pareses as $calon): ?>
-                        <?php $isChecked = in_array($calon['id'], $selected['pareses']) ? 'checked' : ''; ?>
+                        <?php $isChecked = (isset($selected['pareses']) && $selected['pareses'] == $calon['id']) ? 'checked' : ''; ?>
                         <div class="col-12 col-md-4 col-lg-3">
-                            <label class="w-100 h-100 position-relative">
-                                <input type="checkbox" name="pareses[]" value="<?php echo $calon['id']; ?>" class="candidate-checkbox" <?php echo $isChecked; ?>>
-                                <div class="card-candidate shadow-sm">
+                            <div class="w-100 h-100 position-relative">
+
+                                <input type="radio" name="pareses" id="pareses_<?php echo $calon['id']; ?>" value="<?php echo $calon['id']; ?>" class="candidate-input" <?php echo $isChecked; ?>>
+
+                                <div class="card-candidate shadow-sm d-flex flex-column h-100">
                                     <i class="bi bi-check-circle-fill text-primary check-icon"></i>
-                                    <div class="card-content">
+
+                                    <label for="pareses_<?php echo $calon['id']; ?>" class="card-content flex-grow-1" style="margin-bottom:0;">
                                         <div class="candidate-name"><?php echo htmlspecialchars($calon['nama']); ?></div>
                                         <div class="candidate-info"><i class="bi bi-geo-alt me-1"></i> <?php echo htmlspecialchars($calon['daerah']); ?></div>
+                                    </label>
+
+                                    <!-- DROPDOWN PROFIL -->
+                                    <div class="px-3 pb-3">
+                                        <button class="btn btn-sm btn-light w-100 border text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#profil_pareses_<?php echo $calon['id']; ?>" aria-expanded="false" style="font-size: 0.8rem;">
+                                            <i class="bi bi-person-lines-fill me-1"></i> Lihat Profil
+                                        </button>
+                                        <div class="collapse mt-2" id="profil_pareses_<?php echo $calon['id']; ?>">
+                                            <div class="bg-light border rounded p-2 text-start" style="font-size: 0.8rem; color: #555;">
+                                                <strong class="text-dark">Biodata:</strong><br>
+                                                <?php echo htmlspecialchars($calon['biodata'] ?? 'Data belum tersedia'); ?>
+                                                <hr class="my-1 border-secondary opacity-25">
+                                                <strong class="text-dark">Lama Jabatan:</strong><br>
+                                                <?php echo htmlspecialchars($calon['lama_jabatan'] ?? '-'); ?>
+                                                <hr class="my-1 border-secondary opacity-25">
+                                                <strong class="text-dark">Riwayat Kerja:</strong><br>
+                                                <?php echo nl2br(htmlspecialchars($calon['riwayat_kerja'] ?? '-')); ?>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </label>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             </div>
         </div>
 
-
+        <!-- MAJELIS -->
         <div class="section-container section-majelis" id="acc-majelis">
             <div class="accordion-header" onclick="toggleAccordion('acc-majelis')">
                 <div>
                     <h5 class="cat-title text-warning" style="color:#bfa006!important">MAJELIS PUSAT</h5>
-                    <span class="cat-subtitle">Wajib Tepat 15 Calon</span>
+                    <span class="cat-subtitle">Wajib Pilih 1 Calon</span>
                 </div>
                 <div class="d-flex align-items-center">
-                    <span class="counter-badge badge-majelis"><span id="badge-majelis">0</span>/15</span>
+                    <span class="counter-badge badge-majelis"><span id="badge-majelis">0</span>/1</span>
                     <i class="bi bi-chevron-down toggle-icon"></i>
                 </div>
             </div>
@@ -391,33 +393,55 @@
             <div class="accordion-body">
                 <div class="row g-3">
                     <?php foreach ($majelis as $calon): ?>
-                        <?php $isChecked = in_array($calon['id'], $selected['majelis']) ? 'checked' : ''; ?>
+                        <?php $isChecked = (isset($selected['majelis']) && $selected['majelis'] == $calon['id']) ? 'checked' : ''; ?>
                         <div class="col-12 col-md-4 col-lg-3">
-                            <label class="w-100 h-100 position-relative">
-                                <input type="checkbox" name="majelis[]" value="<?php echo $calon['id']; ?>" class="candidate-checkbox" <?php echo $isChecked; ?>>
-                                <div class="card-candidate shadow-sm">
+                            <div class="w-100 h-100 position-relative">
+
+                                <input type="radio" name="majelis" id="majelis_<?php echo $calon['id']; ?>" value="<?php echo $calon['id']; ?>" class="candidate-input" <?php echo $isChecked; ?>>
+
+                                <div class="card-candidate shadow-sm d-flex flex-column h-100">
                                     <i class="bi bi-check-circle-fill text-warning check-icon"></i>
-                                    <div class="card-content">
+
+                                    <label for="majelis_<?php echo $calon['id']; ?>" class="card-content flex-grow-1" style="margin-bottom:0;">
                                         <div class="candidate-name"><?php echo htmlspecialchars($calon['nama']); ?></div>
                                         <div class="candidate-info"><?php echo htmlspecialchars($calon['keterangan']); ?></div>
+                                    </label>
+
+                                    <!-- DROPDOWN PROFIL -->
+                                    <div class="px-3 pb-3">
+                                        <button class="btn btn-sm btn-light w-100 border text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#profil_majelis_<?php echo $calon['id']; ?>" aria-expanded="false" style="font-size: 0.8rem;">
+                                            <i class="bi bi-person-lines-fill me-1"></i> Lihat Profil
+                                        </button>
+                                        <div class="collapse mt-2" id="profil_majelis_<?php echo $calon['id']; ?>">
+                                            <div class="bg-light border rounded p-2 text-start" style="font-size: 0.8rem; color: #555;">
+                                                <strong class="text-dark">Biodata:</strong><br>
+                                                <?php echo htmlspecialchars($calon['biodata'] ?? 'Data belum tersedia'); ?>
+                                                <hr class="my-1 border-secondary opacity-25">
+                                                <strong class="text-dark">Lama Jabatan:</strong><br>
+                                                <?php echo htmlspecialchars($calon['lama_jabatan'] ?? '-'); ?>
+                                                <hr class="my-1 border-secondary opacity-25">
+                                                <strong class="text-dark">Riwayat Kerja:</strong><br>
+                                                <?php echo nl2br(htmlspecialchars($calon['riwayat_kerja'] ?? '-')); ?>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </label>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             </div>
         </div>
 
-
+        <!-- BPK -->
         <div class="section-container section-bpk" id="acc-bpk">
             <div class="accordion-header" onclick="toggleAccordion('acc-bpk')">
                 <div>
                     <h5 class="cat-title text-success">BPK</h5>
-                    <span class="cat-subtitle">Wajib Tepat 3 Calon</span>
+                    <span class="cat-subtitle">Wajib Pilih 1 Calon</span>
                 </div>
                 <div class="d-flex align-items-center">
-                    <span class="counter-badge badge-bpk"><span id="badge-bpk">0</span>/3</span>
+                    <span class="counter-badge badge-bpk"><span id="badge-bpk">0</span>/1</span>
                     <i class="bi bi-chevron-down toggle-icon"></i>
                 </div>
             </div>
@@ -425,18 +449,40 @@
             <div class="accordion-body">
                 <div class="row g-3">
                     <?php foreach ($bpk as $calon): ?>
-                        <?php $isChecked = in_array($calon['id'], $selected['bpk']) ? 'checked' : ''; ?>
+                        <?php $isChecked = (isset($selected['bpk']) && $selected['bpk'] == $calon['id']) ? 'checked' : ''; ?>
                         <div class="col-12 col-md-4 col-lg-3">
-                            <label class="w-100 h-100 position-relative">
-                                <input type="checkbox" name="bpk[]" value="<?php echo $calon['id']; ?>" class="candidate-checkbox" <?php echo $isChecked; ?>>
-                                <div class="card-candidate shadow-sm">
+                            <div class="w-100 h-100 position-relative">
+
+                                <input type="radio" name="bpk" id="bpk_<?php echo $calon['id']; ?>" value="<?php echo $calon['id']; ?>" class="candidate-input" <?php echo $isChecked; ?>>
+
+                                <div class="card-candidate shadow-sm d-flex flex-column h-100">
                                     <i class="bi bi-check-circle-fill text-success check-icon"></i>
-                                    <div class="card-content">
+
+                                    <label for="bpk_<?php echo $calon['id']; ?>" class="card-content flex-grow-1" style="margin-bottom:0;">
                                         <div class="candidate-name"><?php echo htmlspecialchars($calon['nama']); ?></div>
                                         <div class="candidate-info"><?php echo htmlspecialchars($calon['keterangan']); ?></div>
+                                    </label>
+
+                                    <!-- DROPDOWN PROFIL -->
+                                    <div class="px-3 pb-3">
+                                        <button class="btn btn-sm btn-light w-100 border text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#profil_bpk_<?php echo $calon['id']; ?>" aria-expanded="false" style="font-size: 0.8rem;">
+                                            <i class="bi bi-person-lines-fill me-1"></i> Lihat Profil
+                                        </button>
+                                        <div class="collapse mt-2" id="profil_bpk_<?php echo $calon['id']; ?>">
+                                            <div class="bg-light border rounded p-2 text-start" style="font-size: 0.8rem; color: #555;">
+                                                <strong class="text-dark">Biodata:</strong><br>
+                                                <?php echo htmlspecialchars($calon['biodata'] ?? 'Data belum tersedia'); ?>
+                                                <hr class="my-1 border-secondary opacity-25">
+                                                <strong class="text-dark">Lama Jabatan:</strong><br>
+                                                <?php echo htmlspecialchars($calon['lama_jabatan'] ?? '-'); ?>
+                                                <hr class="my-1 border-secondary opacity-25">
+                                                <strong class="text-dark">Riwayat Kerja:</strong><br>
+                                                <?php echo nl2br(htmlspecialchars($calon['riwayat_kerja'] ?? '-')); ?>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </label>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -451,11 +497,9 @@
 
         <div class="floating-footer">
             <div class="footer-content">
-
                 <div class="text-muted small d-none d-sm-block">
                     Pastikan pilihan sesuai
                 </div>
-
                 <button type="submit" class="btn btn-dark rounded-pill px-4 px-md-5 py-2 py-md-3 fw-bold shadow-lg btn-responsive">
                     KIRIM <span class="d-none d-sm-inline">SUARA</span> <i class="bi bi-send-fill ms-1"></i>
                 </button>
@@ -467,8 +511,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-
-        // --- 1. FUNGSI ACCORDION ---
         window.toggleAccordion = function(id) {
             const section = document.getElementById(id);
             document.querySelectorAll('.section-container').forEach(el => {
@@ -477,51 +519,31 @@
             section.classList.toggle('accordion-open');
         }
 
-        // --- 2. FUNGSI HITUNG REAL-TIME ---
         function updateCounters() {
-            // A. Hitung PARESES
-            const pCount = document.querySelectorAll('input[name="pareses[]"]:checked').length;
+            const pCount = document.querySelectorAll('input[name="pareses"]:checked').length;
             const pBadge = document.getElementById('badge-pareses');
             if (pBadge) {
                 pBadge.innerText = pCount;
-                let parentClass = "counter-badge ";
-                if (pCount > 16) parentClass += "bg-danger text-white";
-                else if (pCount > 0) parentClass += "bg-primary text-white";
-                else parentClass += "badge-pareses";
-                pBadge.parentElement.className = parentClass;
+                pBadge.parentElement.className = pCount === 1 ? "counter-badge bg-success text-white" : "counter-badge badge-pareses";
             }
 
-            // B. Hitung MAJELIS
-            const mCount = document.querySelectorAll('input[name="majelis[]"]:checked').length;
+            const mCount = document.querySelectorAll('input[name="majelis"]:checked').length;
             const mBadge = document.getElementById('badge-majelis');
             if (mBadge) {
                 mBadge.innerText = mCount;
-                let parentClass = "counter-badge ";
-                if (mCount === 15) parentClass += "bg-success text-white";
-                else if (mCount > 15) parentClass += "bg-danger text-white";
-                else parentClass += "badge-majelis";
-                mBadge.parentElement.className = parentClass;
+                mBadge.parentElement.className = mCount === 1 ? "counter-badge bg-success text-white" : "counter-badge badge-majelis";
             }
 
-            // C. Hitung BPK
-            const bCount = document.querySelectorAll('input[name="bpk[]"]:checked').length;
+            const bCount = document.querySelectorAll('input[name="bpk"]:checked').length;
             const bBadge = document.getElementById('badge-bpk');
             if (bBadge) {
                 bBadge.innerText = bCount;
-                let parentClass = "counter-badge ";
-                if (bCount === 3) parentClass += "bg-success text-white";
-                else if (bCount > 3) parentClass += "bg-danger text-white";
-                else parentClass += "badge-bpk";
-                bBadge.parentElement.className = parentClass;
+                bBadge.parentElement.className = bCount === 1 ? "counter-badge bg-success text-white" : "counter-badge badge-bpk";
             }
-
-            // Update Footer (Hanya muncul di Laptop karena di HP disembunyikan CSS di bawah)
-            const ftP = document.getElementById('ft-count-pareses');
-            if (ftP) ftP.innerText = pCount;
         }
 
-        const allCheckboxes = document.querySelectorAll('.candidate-checkbox');
-        allCheckboxes.forEach(cb => {
+        const allInputs = document.querySelectorAll('.candidate-input');
+        allInputs.forEach(cb => {
             cb.addEventListener('change', updateCounters);
         });
 
@@ -530,18 +552,14 @@
 </script>
 
 <style>
-    /* Style Footer Melayang */
     .floating-footer {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         background: rgba(255, 255, 255, 0.9);
-        /* Agak transparan */
         backdrop-filter: blur(10px);
-        /* Efek kaca */
         padding: 10px 15px;
-        /* Padding lebih kecil */
         box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.1);
         z-index: 1000;
         border-top: 1px solid #eee;
@@ -550,40 +568,31 @@
     .footer-content {
         display: flex;
         justify-content: flex-end;
-        /* Tombol rata kanan */
         align-items: center;
         max-width: 1200px;
         margin: 0 auto;
     }
 
-    /* Responsive Button Style */
     .btn-responsive {
         transition: all 0.2s;
     }
 
-    /* KHUSUS TAMPILAN HP (Layar < 576px) */
     @media (max-width: 576px) {
         .floating-footer {
             padding: 8px 12px;
-            /* Footer lebih tipis di HP */
         }
 
         .btn-responsive {
             font-size: 0.85rem;
-            /* Font lebih kecil */
             padding: 8px 25px !important;
-            /* Tombol lebih pendek */
             width: 100%;
-            /* Tombol lebar penuh agar mudah ditekan jempol */
         }
 
         .footer-content {
             justify-content: center;
-            /* Di HP tombol di tengah */
         }
     }
 
-    /* Style Hover Kartu */
     .hover-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
