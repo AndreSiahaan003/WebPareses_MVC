@@ -89,13 +89,15 @@ class AdminController
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             $nama = trim($_POST['nama'] ?? '');
+            // Menangkap field Asal Gereja
+            $asal_gereja = trim($_POST['asal_gereja'] ?? '');
             $unsur = trim($_POST['unsur'] ?? '');
             $daerah_lembaga = trim($_POST['daerah_lembaga'] ?? '');
             $resort = trim($_POST['resort'] ?? '');
 
-            // 1. Validasi Umum
-            if (empty($nama) || empty($unsur) || empty($daerah_lembaga)) {
-                $this->setFlash('error', 'Nama, Unsur, dan Daerah/Lembaga wajib diisi.');
+            // 1. Validasi Umum (Tambah validasi asal_gereja)
+            if (empty($nama) || empty($asal_gereja) || empty($unsur) || empty($daerah_lembaga)) {
+                $this->setFlash('error', 'Nama, Asal Gereja, Unsur, dan Daerah/Lembaga wajib diisi.');
                 header("Location: " . BASE_URL . "/admin/createPemilih");
                 exit();
             }
@@ -114,7 +116,8 @@ class AdminController
             // 3. Simpan & Redirect ke QR
             try {
                 $pemilihModel = new Pemilih();
-                $newId = $pemilihModel->create($nama, $unsur, $daerah_lembaga, $resortToSave);
+                // Parameter $asal_gereja ditambahkan di sini
+                $newId = $pemilihModel->create($nama, $asal_gereja, $unsur, $daerah_lembaga, $resortToSave);
 
                 if ($newId) {
                     header("Location: " . BASE_URL . "/admin/viewQr/" . $newId);
@@ -165,12 +168,15 @@ class AdminController
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             $nama = trim($_POST['nama'] ?? '');
+            // Menangkap field Asal Gereja
+            $asal_gereja = trim($_POST['asal_gereja'] ?? '');
             $unsur = trim($_POST['unsur'] ?? '');
             $daerah_lembaga = trim($_POST['daerah_lembaga'] ?? '');
             $resort = trim($_POST['resort'] ?? '');
 
-            if (empty($nama) || empty($unsur) || empty($daerah_lembaga)) {
-                $this->setFlash('error', 'Nama, Unsur, dan Daerah/Lembaga wajib diisi.');
+            // Validasi (Tambah validasi asal_gereja)
+            if (empty($nama) || empty($asal_gereja) || empty($unsur) || empty($daerah_lembaga)) {
+                $this->setFlash('error', 'Nama, Asal Gereja, Unsur, dan Daerah/Lembaga wajib diisi.');
                 header("Location: " . BASE_URL . "/admin/editPemilih/" . $id);
                 exit();
             }
@@ -187,7 +193,8 @@ class AdminController
 
             try {
                 $pemilihModel = new Pemilih();
-                $pemilihModel->update($id, $nama, $unsur, $daerah_lembaga, $resortToSave);
+                // Parameter $asal_gereja ditambahkan di sini
+                $pemilihModel->update($id, $nama, $asal_gereja, $unsur, $daerah_lembaga, $resortToSave);
                 $this->setFlash('message', 'Data pemilih berhasil diupdate.');
                 header("Location: " . BASE_URL . "/admin/pemilih");
                 exit();

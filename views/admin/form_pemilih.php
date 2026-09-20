@@ -62,10 +62,18 @@ $selectedValue = $isEdit ? htmlspecialchars($pemilih['daerah_lembaga']) : '';
                 <form id="formRegistrasi" action="<?php echo $formAction; ?>" method="POST">
 
                     <div class="mb-4">
-                        <label for="nama" class="form-label unique-label"><i class="bi bi-tag me-1"></i>Nama Lengkap</label>
+                        <label for="nama" class="form-label unique-label"><i class="bi bi-person-badge me-1"></i>Nama Lengkap</label>
                         <input type="text" class="form-control form-control-lg" id="nama" name="nama"
                             value="<?php echo $isEdit ? htmlspecialchars($pemilih['nama']) : ''; ?>" required>
                     </div>
+
+                    <!-- TAMBAHAN: FORM ASAL GEREJA (SELALU MUNCUL & WAJIB) -->
+                    <div class="mb-4">
+                        <label for="asal_gereja" class="form-label unique-label"><i class="bi bi-house-door-fill me-1"></i>Asal Gereja</label>
+                        <input type="text" class="form-control form-control-lg" id="asal_gereja" name="asal_gereja"
+                            value="<?php echo $isEdit ? htmlspecialchars($pemilih['asal_gereja'] ?? '') : ''; ?>" placeholder="Contoh: HKBP Sudirman" required>
+                    </div>
+                    <!-- END TAMBAHAN -->
 
                     <div class="mb-4">
                         <label for="unsur" class="form-label fw-bold"><i class="bi bi-list-stars me-1"></i>Pilih Unsur</label>
@@ -112,7 +120,6 @@ $selectedValue = $isEdit ? htmlspecialchars($pemilih['daerah_lembaga']) : '';
                                     "Kepala Departemen Marturia",
                                     "Kepala Departemen Koinonia",
                                     "Kepala Departemen Diakonia"
-
                                 ];
                                 foreach ($deptOptions as $opt): ?>
                                     <option value="<?php echo $opt; ?>" <?php echo ($selectedValue == $opt) ? 'selected' : ''; ?>><?php echo $opt; ?></option>

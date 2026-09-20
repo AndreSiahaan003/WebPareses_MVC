@@ -77,7 +77,8 @@ $isFirstGroup = true; // Penanda untuk grup pertama (agar tidak ada jarak di pal
 
                         <thead>
                             <tr class="header-unsur">
-                                <th colspan="5" class="py-3 ps-4 border-0 bg-primary">
+                                <!-- Colspan diubah menjadi 6 karena ketambahan 1 kolom Asal Gereja -->
+                                <th colspan="6" class="py-3 ps-4 border-0 bg-primary">
                                     <div class="d-flex align-items-center">
                                         <i class="bi bi-people-fill me-2 text-light"></i>
                                         <span class="fw-bold text-light fs-6"><?php echo htmlspecialchars($unsurName); ?></span>
@@ -87,10 +88,12 @@ $isFirstGroup = true; // Penanda untuk grup pertama (agar tidak ada jarak di pal
                                     </div>
                                 </th>
                             </tr>
-                            <tr class="bg-light  text-uppercase">
-                                <th class="ps-4 py-2" style="width: 30%;">Nama Lengkap</th>
-                                <th class="py-2" style="width: 25%;">Daerah / Lembaga</th>
-                                <th class="py-2" style="width: 20%;">Resort</th>
+                            <tr class="bg-light text-uppercase">
+                                <!-- Lebar kolom disesuaikan agar total 100% -->
+                                <th class="ps-4 py-2" style="width: 20%;">Nama Lengkap</th>
+                                <th class="py-2" style="width: 20%;">Asal Gereja</th>
+                                <th class="py-2" style="width: 20%;">Daerah / Lembaga</th>
+                                <th class="py-2" style="width: 15%;">Resort</th>
                                 <th class="py-2 text-center" style="width: 10%;">Status</th>
                                 <th class="py-2 text-center" style="width: 15%;">Aksi</th>
                             </tr>
@@ -101,6 +104,10 @@ $isFirstGroup = true; // Penanda untuk grup pertama (agar tidak ada jarak di pal
                                 <tr class="border-bottom hover-row">
                                     <td class="ps-4 text-secondary">
                                         <?php echo htmlspecialchars($p['nama']); ?>
+                                    </td>
+                                    <!-- Menampilkan Asal Gereja -->
+                                    <td class="text-secondary fw-semibold">
+                                        <?php echo !empty($p['asal_gereja']) ? htmlspecialchars($p['asal_gereja']) : '<span class="text-muted opacity-50">-</span>'; ?>
                                     </td>
                                     <td class="text-secondary">
                                         <?php echo htmlspecialchars($p['daerah_lembaga']); ?>

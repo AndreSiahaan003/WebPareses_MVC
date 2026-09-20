@@ -2,7 +2,7 @@
 class Pemilih extends Model
 {
     // --- FUNGSI REGISTRASI PUBLIK (JIKA MASIH DIPAKAI) ---
-    public function register($nama, $unsur, $daerah_lembaga, $resort)
+    public function register($nama, $asal_gereja, $unsur, $daerah_lembaga, $resort)
     {
         // Cek jika nama sudah ada
         $stmt_check = $this->db->prepare("SELECT id, status_vote FROM pemilih WHERE nama = ?");
@@ -21,11 +21,11 @@ class Pemilih extends Model
         $token = bin2hex(random_bytes(16));
 
         // Jika benar-benar baru
-        $sql = "INSERT INTO pemilih (nama, unsur, daerah_lembaga, resort, status_vote, token, token_used) 
-                VALUES (?, ?, ?, ?, 0, ?, 0)";
+        $sql = "INSERT INTO pemilih (nama, asal_gereja, unsur, daerah_lembaga, resort, status_vote, token, token_used) 
+                VALUES (?, ?, ?, ?, ?, 0, ?, 0)";
         $stmt = $this->db->prepare($sql);
 
-        if ($stmt->execute([$nama, $unsur, $daerah_lembaga, $resort, $token])) {
+        if ($stmt->execute([$nama, $asal_gereja, $unsur, $daerah_lembaga, $resort, $token])) {
             return $this->db->lastInsertId();
         } else {
             throw new Exception("Gagal mendaftarkan pemilih.");
@@ -33,7 +33,7 @@ class Pemilih extends Model
     }
 
     // --- FUNGSI UTAMA ADMIN (CREATE DENGAN TOKEN) ---
-    public function create($nama, $unsur, $daerah_lembaga, $resort)
+    public function create($nama, $asal_gereja, $unsur, $daerah_lembaga, $resort)
     {
         // 1. Generate Token Unik (32 karakter acak)
         $token = bin2hex(random_bytes(16));
@@ -41,12 +41,12 @@ class Pemilih extends Model
         try {
             // 2. Query Insert dengan Token
             // Default status_vote = 0, token_used = 0
-            $sql = "INSERT INTO pemilih (nama, unsur, daerah_lembaga, resort, status_vote, token, token_used) 
-                    VALUES (?, ?, ?, ?, 0, ?, 0)";
+            $sql = "INSERT INTO pemilih (nama, asal_gereja, unsur, daerah_lembaga, resort, status_vote, token, token_used) 
+                    VALUES (?, ?, ?, ?, ?, 0, ?, 0)";
 
             $stmt = $this->db->prepare($sql);
 
-            if ($stmt->execute([$nama, $unsur, $daerah_lembaga, $resort, $token])) {
+            if ($stmt->execute([$nama, $asal_gereja, $unsur, $daerah_lembaga, $resort, $token])) {
                 // PENTING: Kembalikan ID agar bisa di-redirect ke halaman QR Code
                 return $this->db->lastInsertId();
             }
@@ -99,11 +99,11 @@ class Pemilih extends Model
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function update($id, $nama, $unsur, $daerah_lembaga, $resort)
+    public function update($id, $nama, $asal_gereja, $unsur, $daerah_lembaga, $resort)
     {
         try {
-            $stmt = $this->db->prepare("UPDATE pemilih SET nama = ?, unsur = ?, daerah_lembaga = ?, resort = ? WHERE id = ?");
-            return $stmt->execute([$nama, $unsur, $daerah_lembaga, $resort, $id]);
+            $stmt = $this->db->prepare("UPDATE pemilih SET nama = ?, asal_gereja = ?, unsur = ?, daerah_lembaga = ?, resort = ? WHERE id = ?");
+            return $stmt->execute([$nama, $asal_gereja, $unsur, $daerah_lembaga, $resort, $id]);
         } catch (PDOException $e) {
             if ($e->errorInfo[1] == 1062) {
                 throw new Exception("Nama pemilih sudah ada di database.");
