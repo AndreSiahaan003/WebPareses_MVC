@@ -13,6 +13,27 @@
         padding-bottom: 160px;
     }
 
+    /* --- FOTO STYLE --- */
+    .foto-calon-card {
+        width: 90px;
+        height: 90px;
+        object-fit: cover;
+        border: 3px solid #f8f9fa;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .foto-placeholder-card {
+        width: 90px;
+        height: 90px;
+        border: 3px solid #f8f9fa;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+
     /* --- HEADER SAMBUTAN --- */
     .welcome-banner {
         background: white;
@@ -47,7 +68,6 @@
         background-color: #f8f9fa;
     }
 
-    /* Warna Border Kiri Header */
     .section-pareses .accordion-header {
         border-left: 6px solid var(--color-pareses);
     }
@@ -60,7 +80,6 @@
         border-left: 6px solid var(--color-bpk);
     }
 
-    /* Judul & Subjudul */
     .cat-title {
         font-weight: 800;
         font-size: 1.1rem;
@@ -74,7 +93,6 @@
         display: block;
     }
 
-    /* Badge Counter */
     .counter-badge {
         padding: 5px 12px;
         border-radius: 50px;
@@ -99,7 +117,6 @@
         color: var(--color-bpk);
     }
 
-    /* Ikon Panah */
     .toggle-icon {
         transition: transform 0.3s ease;
         font-size: 1.2rem;
@@ -201,9 +218,8 @@
     .check-icon {
         display: none;
         position: absolute;
-        top: 25px;
-        /* Disesuaikan agar ikon tidak tertutup dropdown */
-        right: 20px;
+        top: 15px;
+        right: 15px;
         font-size: 1.5rem;
         z-index: 10;
     }
@@ -235,14 +251,6 @@
 
     .hidden-counter {
         display: none;
-    }
-
-    .welcome-banner {
-        background: white;
-        padding: 20px 20px;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #eee;
-        text-align: center;
     }
 
     .welcome-subtitle {
@@ -290,9 +298,7 @@
 
 <div class="welcome-banner">
     <h5 class="fw-bold text-dark mb-2">Halo, <?php echo htmlspecialchars($_SESSION['pemilih_nama']); ?></h5>
-    <span class="welcome-subtitle">
-        Silakan klik kategori di bawah untuk membuka dan memilih calon.
-    </span>
+    <span class="welcome-subtitle">Silakan klik kategori di bawah untuk membuka dan memilih calon.</span>
     <div class="rules-box">
         <span class="rules-title"><i class="bi bi-info-circle me-1"></i> Ketentuan Pemilihan:</span>
         <ul class="rules-list">
@@ -322,7 +328,7 @@
         <span id="count-bpk" class="hidden-counter">0</span>
 
         <!-- PARESES -->
-        <div class="section-container section-pareses" id="acc-pareses">
+        <div class="section-container section-pareses accordion-open" id="acc-pareses">
             <div class="accordion-header" onclick="toggleAccordion('acc-pareses')">
                 <div>
                     <h5 class="cat-title text-primary">PARESES</h5>
@@ -347,8 +353,18 @@
                                     <i class="bi bi-check-circle-fill text-primary check-icon"></i>
 
                                     <label for="pareses_<?php echo $calon['id']; ?>" class="card-content flex-grow-1" style="margin-bottom:0;">
-                                        <div class="candidate-name"><?php echo htmlspecialchars($calon['nama']); ?></div>
-                                        <div class="candidate-info"><i class="bi bi-geo-alt me-1"></i> <?php echo htmlspecialchars($calon['daerah']); ?></div>
+
+                                        <!-- BAGIAN FOTO PARESES -->
+                                        <div class="text-center mb-3 mt-2">
+                                            <?php if (!empty($calon['foto'])): ?>
+                                                <img src="<?php echo BASE_URL; ?>/uploads/calon/<?php echo htmlspecialchars($calon['foto']); ?>" class="rounded-circle foto-calon-card" alt="Foto">
+                                            <?php else: ?>
+                                                <div class="rounded-circle foto-placeholder-card"><i class="bi bi-person-fill text-secondary fs-2"></i></div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <div class="candidate-name text-center"><?php echo htmlspecialchars($calon['nama']); ?></div>
+                                        <div class="candidate-info text-center"><i class="bi bi-geo-alt me-1"></i> <?php echo htmlspecialchars($calon['daerah']); ?></div>
                                     </label>
 
                                     <!-- DROPDOWN PROFIL -->
@@ -359,13 +375,13 @@
                                         <div class="collapse mt-2" id="profil_pareses_<?php echo $calon['id']; ?>">
                                             <div class="bg-light border rounded p-2 text-start" style="font-size: 0.8rem; color: #555;">
                                                 <strong class="text-dark">Biodata:</strong><br>
-                                                <?php echo htmlspecialchars($calon['biodata'] ?? 'Data belum tersedia'); ?>
+                                                <?php echo !empty($calon['biodata']) ? htmlspecialchars($calon['biodata']) : 'Data belum tersedia'; ?>
                                                 <hr class="my-1 border-secondary opacity-25">
                                                 <strong class="text-dark">Lama Jabatan:</strong><br>
-                                                <?php echo htmlspecialchars($calon['lama_jabatan'] ?? '-'); ?>
+                                                <?php echo !empty($calon['lama_jabatan']) ? htmlspecialchars($calon['lama_jabatan']) : '-'; ?>
                                                 <hr class="my-1 border-secondary opacity-25">
                                                 <strong class="text-dark">Riwayat Kerja:</strong><br>
-                                                <?php echo nl2br(htmlspecialchars($calon['riwayat_kerja'] ?? '-')); ?>
+                                                <?php echo !empty($calon['riwayat_kerja']) ? nl2br(htmlspecialchars($calon['riwayat_kerja'])) : '-'; ?>
                                             </div>
                                         </div>
                                     </div>
@@ -403,8 +419,18 @@
                                     <i class="bi bi-check-circle-fill text-warning check-icon"></i>
 
                                     <label for="majelis_<?php echo $calon['id']; ?>" class="card-content flex-grow-1" style="margin-bottom:0;">
-                                        <div class="candidate-name"><?php echo htmlspecialchars($calon['nama']); ?></div>
-                                        <div class="candidate-info"><?php echo htmlspecialchars($calon['keterangan']); ?></div>
+
+                                        <!-- BAGIAN FOTO MAJELIS -->
+                                        <div class="text-center mb-3 mt-2">
+                                            <?php if (!empty($calon['foto'])): ?>
+                                                <img src="<?php echo BASE_URL; ?>/uploads/calon/<?php echo htmlspecialchars($calon['foto']); ?>" class="rounded-circle foto-calon-card" alt="Foto">
+                                            <?php else: ?>
+                                                <div class="rounded-circle foto-placeholder-card"><i class="bi bi-person-fill text-secondary fs-2"></i></div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <div class="candidate-name text-center"><?php echo htmlspecialchars($calon['nama']); ?></div>
+                                        <div class="candidate-info text-center"><?php echo htmlspecialchars($calon['keterangan']); ?></div>
                                     </label>
 
                                     <!-- DROPDOWN PROFIL -->
@@ -415,13 +441,13 @@
                                         <div class="collapse mt-2" id="profil_majelis_<?php echo $calon['id']; ?>">
                                             <div class="bg-light border rounded p-2 text-start" style="font-size: 0.8rem; color: #555;">
                                                 <strong class="text-dark">Biodata:</strong><br>
-                                                <?php echo htmlspecialchars($calon['biodata'] ?? 'Data belum tersedia'); ?>
+                                                <?php echo !empty($calon['biodata']) ? htmlspecialchars($calon['biodata']) : 'Data belum tersedia'; ?>
                                                 <hr class="my-1 border-secondary opacity-25">
                                                 <strong class="text-dark">Lama Jabatan:</strong><br>
-                                                <?php echo htmlspecialchars($calon['lama_jabatan'] ?? '-'); ?>
+                                                <?php echo !empty($calon['lama_jabatan']) ? htmlspecialchars($calon['lama_jabatan']) : '-'; ?>
                                                 <hr class="my-1 border-secondary opacity-25">
                                                 <strong class="text-dark">Riwayat Kerja:</strong><br>
-                                                <?php echo nl2br(htmlspecialchars($calon['riwayat_kerja'] ?? '-')); ?>
+                                                <?php echo !empty($calon['riwayat_kerja']) ? nl2br(htmlspecialchars($calon['riwayat_kerja'])) : '-'; ?>
                                             </div>
                                         </div>
                                     </div>
@@ -459,8 +485,18 @@
                                     <i class="bi bi-check-circle-fill text-success check-icon"></i>
 
                                     <label for="bpk_<?php echo $calon['id']; ?>" class="card-content flex-grow-1" style="margin-bottom:0;">
-                                        <div class="candidate-name"><?php echo htmlspecialchars($calon['nama']); ?></div>
-                                        <div class="candidate-info"><?php echo htmlspecialchars($calon['keterangan']); ?></div>
+
+                                        <!-- BAGIAN FOTO BPK -->
+                                        <div class="text-center mb-3 mt-2">
+                                            <?php if (!empty($calon['foto'])): ?>
+                                                <img src="<?php echo BASE_URL; ?>/uploads/calon/<?php echo htmlspecialchars($calon['foto']); ?>" class="rounded-circle foto-calon-card" alt="Foto">
+                                            <?php else: ?>
+                                                <div class="rounded-circle foto-placeholder-card"><i class="bi bi-person-fill text-secondary fs-2"></i></div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <div class="candidate-name text-center"><?php echo htmlspecialchars($calon['nama']); ?></div>
+                                        <div class="candidate-info text-center"><?php echo htmlspecialchars($calon['keterangan']); ?></div>
                                     </label>
 
                                     <!-- DROPDOWN PROFIL -->
@@ -471,13 +507,13 @@
                                         <div class="collapse mt-2" id="profil_bpk_<?php echo $calon['id']; ?>">
                                             <div class="bg-light border rounded p-2 text-start" style="font-size: 0.8rem; color: #555;">
                                                 <strong class="text-dark">Biodata:</strong><br>
-                                                <?php echo htmlspecialchars($calon['biodata'] ?? 'Data belum tersedia'); ?>
+                                                <?php echo !empty($calon['biodata']) ? htmlspecialchars($calon['biodata']) : 'Data belum tersedia'; ?>
                                                 <hr class="my-1 border-secondary opacity-25">
                                                 <strong class="text-dark">Lama Jabatan:</strong><br>
-                                                <?php echo htmlspecialchars($calon['lama_jabatan'] ?? '-'); ?>
+                                                <?php echo !empty($calon['lama_jabatan']) ? htmlspecialchars($calon['lama_jabatan']) : '-'; ?>
                                                 <hr class="my-1 border-secondary opacity-25">
                                                 <strong class="text-dark">Riwayat Kerja:</strong><br>
-                                                <?php echo nl2br(htmlspecialchars($calon['riwayat_kerja'] ?? '-')); ?>
+                                                <?php echo !empty($calon['riwayat_kerja']) ? nl2br(htmlspecialchars($calon['riwayat_kerja'])) : '-'; ?>
                                             </div>
                                         </div>
                                     </div>
@@ -497,9 +533,7 @@
 
         <div class="floating-footer">
             <div class="footer-content">
-                <div class="text-muted small d-none d-sm-block">
-                    Pastikan pilihan sesuai
-                </div>
+                <div class="text-muted small d-none d-sm-block">Pastikan pilihan sesuai</div>
                 <button type="submit" class="btn btn-dark rounded-pill px-4 px-md-5 py-2 py-md-3 fw-bold shadow-lg btn-responsive">
                     KIRIM <span class="d-none d-sm-inline">SUARA</span> <i class="bi bi-send-fill ms-1"></i>
                 </button>
@@ -591,12 +625,6 @@
         .footer-content {
             justify-content: center;
         }
-    }
-
-    .hover-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-        border: 1px solid var(--bs-primary) !important;
     }
 </style>
 

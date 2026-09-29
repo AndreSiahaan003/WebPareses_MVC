@@ -1,6 +1,5 @@
 <?php
 
-// --- PEMUATAN MODEL DENGAN JALUR ABSOLUT (ANTI-ERROR) ---
 require_once __DIR__ . '/../models/Vote.php';
 require_once __DIR__ . '/../models/Pemilih.php';
 require_once __DIR__ . '/../models/Calon.php';
@@ -8,13 +7,10 @@ require_once __DIR__ . '/../models/Admin.php';
 
 class AdminController
 {
-    // Default page: Login
     public function index()
     {
         $this->login();
     }
-
-    // --- AUTHENTICATION ---
 
     public function login()
     {
@@ -49,12 +45,9 @@ class AdminController
         exit();
     }
 
-    // --- DASHBOARD ---
-
     public function dashboard()
     {
         $this->checkAuth();
-
         try {
             $voteModel = new Vote();
             $data['stats'] = $voteModel->getStats();
@@ -64,8 +57,7 @@ class AdminController
         }
     }
 
-    // --- CRUD PEMILIH & QR CODE ---
-
+    // --- CRUD PEMILIH ---
     public function pemilih()
     {
         $this->checkAuth();
@@ -74,7 +66,6 @@ class AdminController
         $data['pesan'] = $this->getFlash('message');
         $this->adminView('admin/crud_pemilih', $data);
     }
-
     public function createPemilih()
     {
         $this->checkAuth();
@@ -82,43 +73,32 @@ class AdminController
         $data['error'] = $this->getFlash('error');
         $this->adminView('admin/form_pemilih', $data);
     }
-
     public function storePemilih()
     {
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
             $nama = trim($_POST['nama'] ?? '');
-            // Menangkap field Asal Gereja
             $asal_gereja = trim($_POST['asal_gereja'] ?? '');
             $unsur = trim($_POST['unsur'] ?? '');
             $daerah_lembaga = trim($_POST['daerah_lembaga'] ?? '');
             $resort = trim($_POST['resort'] ?? '');
 
-            // 1. Validasi Umum (Tambah validasi asal_gereja)
             if (empty($nama) || empty($asal_gereja) || empty($unsur) || empty($daerah_lembaga)) {
                 $this->setFlash('error', 'Nama, Asal Gereja, Unsur, dan Daerah/Lembaga wajib diisi.');
                 header("Location: " . BASE_URL . "/admin/createPemilih");
                 exit();
             }
-
-            // 2. Validasi Khusus (Pendeta/Jemaat Wajib Resort)
-            if ($unsur === "Pendeta" || $unsur === "Anggota Jemaat") {
-                if (empty($resort)) {
-                    $this->setFlash('error', 'Untuk unsur Pendeta/Anggota Jemaat, kolom Resort WAJIB diisi.');
-                    header("Location: " . BASE_URL . "/admin/createPemilih");
-                    exit();
-                }
+            if (($unsur === "Pendeta" || $unsur === "Anggota Jemaat") && empty($resort)) {
+                $this->setFlash('error', 'Untuk unsur Pendeta/Anggota Jemaat, kolom Resort WAJIB diisi.');
+                header("Location: " . BASE_URL . "/admin/createPemilih");
+                exit();
             }
 
             $resortToSave = !empty($resort) ? $resort : null;
 
-            // 3. Simpan & Redirect ke QR
             try {
                 $pemilihModel = new Pemilih();
-                // Parameter $asal_gereja ditambahkan di sini
                 $newId = $pemilihModel->create($nama, $asal_gereja, $unsur, $daerah_lembaga, $resortToSave);
-
                 if ($newId) {
                     header("Location: " . BASE_URL . "/admin/viewQr/" . $newId);
                     exit();
@@ -130,25 +110,19 @@ class AdminController
             }
         }
     }
-
-    // Tampilkan QR Code
     public function viewQr($id)
     {
         $this->checkAuth();
         $pemilihModel = new Pemilih();
         $pemilih = $pemilihModel->find($id);
-
         if (!$pemilih) {
             header("Location: " . BASE_URL . "/admin/pemilih");
             exit();
         }
-
         $data['pemilih'] = $pemilih;
         $data['loginLink'] = BASE_URL . "/auth/scan?t=" . $pemilih['token'];
-
         $this->adminView('admin/view_qr', $data);
     }
-
     public function editPemilih($id)
     {
         $this->checkAuth();
@@ -161,39 +135,31 @@ class AdminController
         }
         $this->adminView('admin/form_pemilih', $data);
     }
-
     public function updatePemilih($id)
     {
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
             $nama = trim($_POST['nama'] ?? '');
-            // Menangkap field Asal Gereja
             $asal_gereja = trim($_POST['asal_gereja'] ?? '');
             $unsur = trim($_POST['unsur'] ?? '');
             $daerah_lembaga = trim($_POST['daerah_lembaga'] ?? '');
             $resort = trim($_POST['resort'] ?? '');
 
-            // Validasi (Tambah validasi asal_gereja)
             if (empty($nama) || empty($asal_gereja) || empty($unsur) || empty($daerah_lembaga)) {
                 $this->setFlash('error', 'Nama, Asal Gereja, Unsur, dan Daerah/Lembaga wajib diisi.');
                 header("Location: " . BASE_URL . "/admin/editPemilih/" . $id);
                 exit();
             }
-
-            if ($unsur === "Pendeta" || $unsur === "Anggota Jemaat") {
-                if (empty($resort)) {
-                    $this->setFlash('error', 'Untuk unsur Pendeta/Anggota Jemaat, kolom Resort WAJIB diisi.');
-                    header("Location: " . BASE_URL . "/admin/editPemilih/" . $id);
-                    exit();
-                }
+            if (($unsur === "Pendeta" || $unsur === "Anggota Jemaat") && empty($resort)) {
+                $this->setFlash('error', 'Untuk unsur Pendeta/Anggota Jemaat, kolom Resort WAJIB diisi.');
+                header("Location: " . BASE_URL . "/admin/editPemilih/" . $id);
+                exit();
             }
 
             $resortToSave = !empty($resort) ? $resort : null;
 
             try {
                 $pemilihModel = new Pemilih();
-                // Parameter $asal_gereja ditambahkan di sini
                 $pemilihModel->update($id, $nama, $asal_gereja, $unsur, $daerah_lembaga, $resortToSave);
                 $this->setFlash('message', 'Data pemilih berhasil diupdate.');
                 header("Location: " . BASE_URL . "/admin/pemilih");
@@ -205,7 +171,6 @@ class AdminController
             }
         }
     }
-
     public function deletePemilih($id)
     {
         $this->checkAuth();
@@ -216,9 +181,7 @@ class AdminController
         exit();
     }
 
-    // --- CRUD CALON (PARESES, MAJELIS, BPK) ---
-
-    // 1. PARESES
+    // --- CRUD PARESES ---
     public function pareses()
     {
         $this->checkAuth();
@@ -238,14 +201,15 @@ class AdminController
     {
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $foto = $this->uploadFoto();
             $calonModel = new Calon();
-            // Menangkap field baru
             $calonModel->createPareses(
                 $_POST['nama'],
                 $_POST['daerah'],
                 $_POST['biodata'] ?? '',
                 $_POST['lama_jabatan'] ?? '',
-                $_POST['riwayat_kerja'] ?? ''
+                $_POST['riwayat_kerja'] ?? '',
+                $foto
             );
             $this->setFlash('message', 'Calon berhasil ditambahkan.');
             header("Location: " . BASE_URL . "/admin/pareses");
@@ -264,14 +228,21 @@ class AdminController
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $calonModel = new Calon();
-            // Menangkap field baru
+            $fotoBaru = $this->uploadFoto();
+            if ($fotoBaru) {
+                $fotoToSave = $fotoBaru;
+            } else {
+                $calonLama = $calonModel->findPareses($id);
+                $fotoToSave = $calonLama['foto'];
+            }
             $calonModel->updatePareses(
                 $id,
                 $_POST['nama'],
                 $_POST['daerah'],
                 $_POST['biodata'] ?? '',
                 $_POST['lama_jabatan'] ?? '',
-                $_POST['riwayat_kerja'] ?? ''
+                $_POST['riwayat_kerja'] ?? '',
+                $fotoToSave
             );
             $this->setFlash('message', 'Calon berhasil diupdate.');
             header("Location: " . BASE_URL . "/admin/pareses");
@@ -288,7 +259,7 @@ class AdminController
         exit();
     }
 
-    // 2. MAJELIS
+    // --- CRUD MAJELIS ---
     public function majelis()
     {
         $this->checkAuth();
@@ -307,14 +278,15 @@ class AdminController
     {
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $foto = $this->uploadFoto();
             $calonModel = new Calon();
-            // Menangkap field baru
             $calonModel->createMajelisPusat(
                 $_POST['nama'],
                 $_POST['keterangan'],
                 $_POST['biodata'] ?? '',
                 $_POST['lama_jabatan'] ?? '',
-                $_POST['riwayat_kerja'] ?? ''
+                $_POST['riwayat_kerja'] ?? '',
+                $foto
             );
             $this->setFlash('message', 'Calon berhasil ditambahkan.');
             header("Location: " . BASE_URL . "/admin/majelis");
@@ -333,14 +305,21 @@ class AdminController
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $calonModel = new Calon();
-            // Menangkap field baru
+            $fotoBaru = $this->uploadFoto();
+            if ($fotoBaru) {
+                $fotoToSave = $fotoBaru;
+            } else {
+                $calonLama = $calonModel->findMajelisPusat($id);
+                $fotoToSave = $calonLama['foto'];
+            }
             $calonModel->updateMajelisPusat(
                 $id,
                 $_POST['nama'],
                 $_POST['keterangan'],
                 $_POST['biodata'] ?? '',
                 $_POST['lama_jabatan'] ?? '',
-                $_POST['riwayat_kerja'] ?? ''
+                $_POST['riwayat_kerja'] ?? '',
+                $fotoToSave
             );
             $this->setFlash('message', 'Calon berhasil diupdate.');
             header("Location: " . BASE_URL . "/admin/majelis");
@@ -357,7 +336,7 @@ class AdminController
         exit();
     }
 
-    // 3. BPK
+    // --- CRUD BPK ---
     public function bpk()
     {
         $this->checkAuth();
@@ -376,14 +355,15 @@ class AdminController
     {
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $foto = $this->uploadFoto();
             $calonModel = new Calon();
-            // Menangkap field baru
             $calonModel->createBPK(
                 $_POST['nama'],
                 $_POST['keterangan'],
                 $_POST['biodata'] ?? '',
                 $_POST['lama_jabatan'] ?? '',
-                $_POST['riwayat_kerja'] ?? ''
+                $_POST['riwayat_kerja'] ?? '',
+                $foto
             );
             $this->setFlash('message', 'Calon berhasil ditambahkan.');
             header("Location: " . BASE_URL . "/admin/bpk");
@@ -402,14 +382,21 @@ class AdminController
         $this->checkAuth();
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $calonModel = new Calon();
-            // Menangkap field baru
+            $fotoBaru = $this->uploadFoto();
+            if ($fotoBaru) {
+                $fotoToSave = $fotoBaru;
+            } else {
+                $calonLama = $calonModel->findBPK($id);
+                $fotoToSave = $calonLama['foto'];
+            }
             $calonModel->updateBPK(
                 $id,
                 $_POST['nama'],
                 $_POST['keterangan'],
                 $_POST['biodata'] ?? '',
                 $_POST['lama_jabatan'] ?? '',
-                $_POST['riwayat_kerja'] ?? ''
+                $_POST['riwayat_kerja'] ?? '',
+                $fotoToSave
             );
             $this->setFlash('message', 'Calon berhasil diupdate.');
             header("Location: " . BASE_URL . "/admin/bpk");
@@ -426,9 +413,7 @@ class AdminController
         exit();
     }
 
-
     // --- HELPER FUNCTIONS ---
-
     protected function checkAuth()
     {
         if (!isset($_SESSION['admin_id'])) {
@@ -457,13 +442,39 @@ class AdminController
     {
         $_SESSION[$key] = $message;
     }
-
     protected function getFlash($key)
     {
         if (isset($_SESSION[$key])) {
             $message = $_SESSION[$key];
             unset($_SESSION[$key]);
             return $message;
+        }
+        return null;
+    }
+
+    // UPLOAD FOTO HELPER
+    protected function uploadFoto()
+    {
+        if (isset($_FILES['foto']) && $_FILES['foto']['error'] == 0) {
+            $allowed = ['jpg', 'jpeg', 'png'];
+            $filename = $_FILES['foto']['name'];
+            $filetype = pathinfo($filename, PATHINFO_EXTENSION);
+            $filesize = $_FILES['foto']['size'];
+
+            if (in_array(strtolower($filetype), $allowed) && $filesize <= 2097152) { // 2MB
+                $newFilename = uniqid() . '.' . $filetype;
+                // Pastikan folder ini ada di server!
+                $uploadPath = __DIR__ . '/../uploads/calon/';
+
+                // Jika folder belum ada, buat otomatis
+                if (!is_dir($uploadPath)) {
+                    mkdir($uploadPath, 0777, true);
+                }
+
+                if (move_uploaded_file($_FILES['foto']['tmp_name'], $uploadPath . $newFilename)) {
+                    return $newFilename;
+                }
+            }
         }
         return null;
     }
