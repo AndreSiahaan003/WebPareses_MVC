@@ -1,358 +1,474 @@
 <?php
-// --- 1. PERSIAPAN DATA PHP ---
+// --- 1. PERSIAPAN DATA ---
 if (!isset($stats) || !is_array($stats)) {
     $stats = ['pareses' => [], 'majelis' => [], 'bpk' => []];
 }
 
-// --- 2. DATA UNTUK CHART (JSON) ---
-$jsParesesLabels = json_encode(array_column($stats['pareses'], 'nama'));
-$jsParesesData   = json_encode(array_column($stats['pareses'], 'jumlah_suara'));
-$jsMajelisLabels = json_encode(array_column($stats['majelis'], 'nama'));
-$jsMajelisData   = json_encode(array_column($stats['majelis'], 'jumlah_suara'));
-$jsBpkLabels     = json_encode(array_column($stats['bpk'], 'nama'));
-$jsBpkData       = json_encode(array_column($stats['bpk'], 'jumlah_suara'));
-
-// --- 3. HITUNG SUARA TERTINGGI ---
-$maxPareses = !empty($stats['pareses']) ? max(array_column($stats['pareses'], 'jumlah_suara')) : 0;
-$maxMajelis = !empty($stats['majelis']) ? max(array_column($stats['majelis'], 'jumlah_suara')) : 0;
-$maxBpk     = !empty($stats['bpk']) ? max(array_column($stats['bpk'], 'jumlah_suara')) : 0;
-
-// --- 4. HELPER LIST PEMENANG ---
-function getTopNames($candidates, $maxScore)
+/**
+ * Urutkan kandidat dan hitung peringkat, persentase, selisih.
+ * Tiap kategori hanya satu pemenang, jadi seri di peringkat 1 ditandai
+ * sebagai "perlu keputusan lanjutan".
+ */
+function buildRanking($candidates)
 {
-    if ($maxScore == 0 || empty($candidates)) return '-';
+    $items = array_values(is_array($candidates) ? $candidates : []);
+
+    usort($items, function ($a, $b) {
+        if ($a['jumlah_suara'] == $b['jumlah_suara']) {
+            return strcasecmp($a['nama'], $b['nama']);
+        }
+        return $b['jumlah_suara'] <=> $a['jumlah_suara'];
+    });
+
+    $total = 0;
+    foreach ($items as $c) $total += (int) $c['jumlah_suara'];
+    $max = !empty($items) ? (int) $items[0]['jumlah_suara'] : 0;
+
+    $rank = 0;
+    $prev = null;
     $winners = [];
-    foreach ($candidates as $c) {
-        if ($c['jumlah_suara'] == $maxScore) $winners[] = $c['nama'];
+    $secondScore = null;
+    foreach ($items as $i => &$c) {
+        $s = (int) $c['jumlah_suara'];
+        if ($s !== $prev) $rank = $i + 1;
+        $prev = $s;
+        $c['rank']      = $rank;
+        $c['persen']    = $total > 0 ? ($s / $total) * 100 : 0;
+        $c['selisih']   = $max - $s;
+        $c['is_winner'] = ($rank === 1 && $max > 0);
+        if ($c['is_winner']) $winners[] = $c['nama'];
+        if ($rank > 1 && $secondScore === null) $secondScore = $s;
     }
-    return implode(", ", $winners);
+    unset($c);
+
+    return [
+        'items'   => $items,
+        'total'   => $total,
+        'max'     => $max,
+        'winners' => $winners,
+        'is_tie'  => count($winners) > 1,
+        'margin'  => ($secondScore !== null && count($winners) === 1) ? $max - $secondScore : null,
+    ];
 }
 
-$topParesesName = getTopNames($stats['pareses'], $maxPareses);
-$topMajelisName = getTopNames($stats['majelis'], $maxMajelis);
-$topBpkName     = getTopNames($stats['bpk'], $maxBpk);
-
-// --- 5. HELPER CSS CLASS ---
-function getWinnerClass($count, $max)
+function fmtPersen($p)
 {
-    if ($count == $max && $max > 0) {
-        return 'border-warning bg-warning bg-opacity-10 shadow-sm';
-    }
-    return 'border-light bg-white';
+    return number_format($p, 1, ',', '.') . '%';
 }
+
+/** Kartu pemenang */
+function renderWinnerCard($r)
+{
+    echo '<div class="winner-card">';
+    echo '<div class="winner-label">' . ($r['is_tie'] ? 'Seri di peringkat 1' : 'Pemenang') . '</div>';
+
+    if ($r['max'] == 0) {
+        echo '<div class="winner-name muted">Belum ada suara masuk</div>';
+    } else {
+        echo '<div class="winner-name">' . htmlspecialchars(implode(' & ', $r['winners'])) . '</div>';
+        echo '<div class="winner-meta">';
+        echo '<div>Jumlah suara : ' . $r['max'] . ' suara</div>';
+        echo '<div>Total Persentase : ' . fmtPersen($r['items'][0]['persen']) . '</div>';
+        if ($r['margin'] !== null) {
+            echo '<div class="winner-margin">Unggul ' . $r['margin'] . ' suara dari peringkat 2</div>';
+        }
+        echo '</div>';
+        if ($r['is_tie']) {
+            echo '<div class="tie-note">Hanya satu yang dapat terpilih, sehingga perlu keputusan lanjutan.</div>';
+        }
+    }
+    echo '</div>';
+}
+
+/** Satu bagian kategori */
+function renderCategory($title, $icon, $accent, $canvasId, $r, $showDaerah = false)
+{
+?>
+    <section class="cat-section" style="--accent: <?php echo $accent; ?>;">
+        <div class="cat-head">
+            <div class="cat-title"><i class="bi <?php echo $icon; ?>"></i> <?php echo htmlspecialchars($title); ?></div>
+            <div class="cat-meta"><?php echo count($r['items']); ?> calon &middot; <?php echo $r['total']; ?> suara</div>
+        </div>
+
+        <?php renderWinnerCard($r); ?>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="block-label">Peringkat</div>
+                <div class="scroll-area">
+                    <?php foreach ($r['items'] as $c):
+                        $barPct = $r['max'] > 0 ? ($c['jumlah_suara'] / $r['max']) * 100 : 0;
+                        $tip = $c['is_winner'] ? '' : '-' . $c['selisih'] . ' suara dari peringkat 1';
+                    ?>
+                        <div class="cand-row <?php echo $c['is_winner'] ? 'is-winner' : ''; ?>" title="<?php echo htmlspecialchars($tip); ?>">
+                            <div class="cand-rank"><?php echo $r['max'] > 0 ? $c['rank'] : '–'; ?></div>
+                            <div class="cand-main">
+                                <div class="cand-name"><?php echo htmlspecialchars($c['nama']); ?></div>
+                                <?php if ($showDaerah && !empty($c['daerah'])): ?>
+                                    <div class="cand-sub"><?php echo htmlspecialchars($c['daerah']); ?></div>
+                                <?php endif; ?>
+                                <div class="cand-bar"><span style="width: <?php echo round($barPct, 1); ?>%;"></span></div>
+                            </div>
+                            <div class="cand-votes">
+                                <strong><?php echo (int) $c['jumlah_suara']; ?></strong>
+                                <small><?php echo fmtPersen($c['persen']); ?></small>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="block-label">Grafik</div>
+                <div class="chart-scroll">
+                    <div class="chart-inner" style="height: 400px; min-width: <?php echo count($r['items']) * 46; ?>px;">
+                        <canvas id="<?php echo $canvasId; ?>"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+<?php
+}
+
+// --- 2. HITUNG RANKING ---
+$rankPareses = buildRanking($stats['pareses'] ?? []);
+$rankMajelis = buildRanking($stats['majelis'] ?? []);
+$rankBpk     = buildRanking($stats['bpk'] ?? []);
+
+// --- 3. DATA CHART ---
+$jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+function chartPayload($r, $color)
+{
+    return [
+        'labels' => array_column($r['items'], 'nama'),
+        'data'   => array_map('intval', array_column($r['items'], 'jumlah_suara')),
+        'winner' => array_column($r['items'], 'is_winner'),
+        'color'  => $color,
+    ];
+}
+$chartData = [
+    'chartPareses' => chartPayload($rankPareses, '#198754'),
+    'chartMajelis' => chartPayload($rankMajelis, '#e8a100'),
+    'chartBpk'     => chartPayload($rankBpk, '#0d6efd'),
+];
 ?>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
 <style>
-    :root {
-        --soft-bg: #f8f9fa;
-    }
-
     body {
-        background-color: var(--soft-bg);
+        background-color: #f6f7f9;
     }
 
-    /* Style Kartu Layout */
-    .card-section {
-        border: none;
-        border-radius: 16px;
+    .dash-wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    /* Section */
+    .cat-section {
         background: #fff;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-        margin-bottom: 40px;
-        overflow: hidden;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+        border-top: 4px solid var(--accent);
     }
 
-    .section-header {
-        padding: 1.5rem;
-        color: white;
-        font-weight: bold;
-        font-size: 1.2rem;
+    .cat-head {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-bottom: 1.5rem;
     }
 
-    .bg-pareses {
-        background: linear-gradient(135deg, #198754, #20c997);
+    .cat-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #212529;
     }
 
-    .bg-majelis {
-        background: linear-gradient(135deg, #ffc107, #fd7e14);
-        color: #333 !important;
+    .cat-title i {
+        color: var(--accent);
+        margin-right: .25rem;
     }
 
-    .bg-bpk {
-        background: linear-gradient(135deg, #0dcaf0, #0d6efd);
+    .cat-meta {
+        font-size: .9rem;
+        color: #6c757d;
     }
 
-    /* Scroll Area untuk Daftar Nama */
+    /* Winner */
+    .winner-card {
+        background: #fafafa;
+        border-left: 4px solid var(--accent);
+        border-radius: 10px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .winner-label {
+        font-size: .75rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .winner-name {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #212529;
+        margin: .25rem 0;
+    }
+
+    .winner-name.muted {
+        color: #adb5bd;
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+
+    .winner-meta {
+        color: #495057;
+        font-size: .95rem;
+    }
+
+    .winner-margin {
+        margin-top: .35rem;
+        font-size: .85rem;
+        color: #868e96;
+    }
+
+    .tie-note {
+        margin-top: .6rem;
+        font-size: .85rem;
+        color: #b02a37;
+    }
+
+    /* Block label */
+    .block-label {
+        font-size: .75rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: .75rem;
+    }
+
+    /* List */
     .scroll-area {
-        height: 400px;
-        /* Samakan tinggi dengan grafik */
+        max-height: 460px;
         overflow-y: auto;
-        padding-right: 10px;
+        padding-right: 8px;
     }
 
-    /* Scrollbar Cantik */
     .scroll-area::-webkit-scrollbar {
         width: 6px;
     }
 
-    .scroll-area::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-
     .scroll-area::-webkit-scrollbar-thumb {
-        background: #ccc;
+        background: #d5d8dc;
         border-radius: 10px;
     }
 
-    /* Kartu Calon Kecil (List Item) */
-    .list-candidate-item {
-        border: 1px solid #eee;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 10px;
-        transition: transform 0.2s;
+    .cand-row {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: 1rem;
+        padding: .9rem .25rem;
+        border-bottom: 1px solid #eef0f2;
     }
 
-    .list-candidate-item:hover {
-        transform: translateX(5px);
+    .cand-row:last-child {
+        border-bottom: none;
     }
 
-    /* Chart Container */
-    .chart-wrapper {
-        height: 400px;
-        width: 100%;
-        padding: 10px;
-        background: #fff;
-        border-radius: 12px;
+    .cand-rank {
+        width: 28px;
+        text-align: center;
+        font-weight: 700;
+        color: #adb5bd;
     }
 
-    /* Summary Top Cards */
-    .card-summary {
-        border: none;
-        border-radius: 12px;
-        min-height: 140px;
+    .cand-row.is-winner .cand-rank {
+        color: var(--accent);
+        font-size: 1.1rem;
     }
 
-    .winner-name {
-        font-size: 1.2rem;
-        font-weight: 800;
-        margin-bottom: 5px;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
+    .cand-main {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .cand-name {
+        font-weight: 600;
+        color: #212529;
+        line-height: 1.3;
+    }
+
+    .cand-row.is-winner .cand-name {
+        font-weight: 700;
+    }
+
+    .cand-sub {
+        font-size: .8rem;
+        color: #868e96;
+    }
+
+    .cand-bar {
+        height: 4px;
+        background: #eef0f2;
+        border-radius: 4px;
+        margin-top: .5rem;
         overflow: hidden;
     }
 
-    .icon-bg {
-        position: absolute;
-        right: 10px;
-        bottom: -10px;
-        font-size: 5rem;
-        opacity: 0.15;
-        transform: rotate(-15deg);
+    .cand-bar span {
+        display: block;
+        height: 100%;
+        background: var(--accent);
+        opacity: .35;
+        border-radius: 4px;
+    }
+
+    .cand-row.is-winner .cand-bar span {
+        opacity: 1;
+    }
+
+    .cand-votes {
+        text-align: right;
+        min-width: 56px;
+        line-height: 1.2;
+    }
+
+    .cand-votes strong {
+        display: block;
+        font-size: 1.15rem;
+        color: #212529;
+    }
+
+    .cand-votes small {
+        color: #868e96;
+        font-size: .78rem;
+    }
+
+    /* Chart */
+    .chart-scroll {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .chart-inner {
+        position: relative;
+        width: 100%;
+    }
+
+    @media print {
+
+        .scroll-area,
+        .chart-scroll {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        .cat-section {
+            break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+
+        .btn {
+            display: none !important;
+        }
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-5 mt-2">
-    <div>
-        <h2 class="fw-bold text-dark mb-1">Dashboard Statistik</h2>
-        <p class="text-muted mb-0">Pantauan perolehan suara real-time.</p>
-    </div>
-    <div>
-        <button onclick="window.location.reload()" class="btn btn-light border shadow-sm me-2"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-        <button onclick="window.print()" class="btn btn-primary shadow-sm"><i class="bi bi-printer"></i> Cetak</button>
-    </div>
-</div>
-
-
-
-
-<div class="card card-section">
-    <div class="section-header bg-pareses">
-        <div><i class="bi bi-people-fill me-2"></i> Hasil Suara Pareses</div>
-        <span class="badge bg-white text-success rounded-pill">Total Calon: <?php echo count($stats['pareses']); ?></span>
-    </div>
-    <div class="card-body p-4">
-        <div class="row">
-            <div class="col-lg-4 mb-4 mb-lg-0">
-                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">PERINGKAT & PEROLEHAN SUARA</h6>
-                <div class="scroll-area">
-                    <?php foreach ($stats['pareses'] as $data): ?>
-                        <div class="list-candidate-item <?php echo getWinnerClass($data['jumlah_suara'], $maxPareses); ?>">
-                            <div>
-                                <div class="fw-bold text-dark"><?php echo htmlspecialchars($data['nama']); ?></div>
-                                <small class="text-muted"><?php echo htmlspecialchars($data['daerah']); ?></small>
-                            </div>
-                            <span class="badge bg-success rounded-pill fs-6"><?php echo $data['jumlah_suara']; ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            <div class="col-lg-8">
-                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">VISUALISASI GRAFIK</h6>
-                <div class="chart-wrapper">
-                    <canvas id="chartPareses"></canvas>
-                </div>
-            </div>
+<div class="dash-wrap">
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Dashboard Statistik</h2>
+            <p class="text-muted mb-0">Dimuat pada <?php echo date('d/m/Y H:i'); ?></p>
+        </div>
+        <div>
+            <button onclick="window.location.reload()" class="btn btn-light border me-2"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            <button onclick="window.print()" class="btn btn-dark"><i class="bi bi-printer"></i> Cetak</button>
         </div>
     </div>
+
+    <?php
+    renderCategory('Pareses',       'bi-people-fill',     '#198754', 'chartPareses', $rankPareses, true);
+    renderCategory('Majelis Pusat', 'bi-building-fill',   '#e8a100', 'chartMajelis', $rankMajelis);
+    renderCategory('BPK',           'bi-calculator-fill', '#0d6efd', 'chartBpk',     $rankBpk);
+    ?>
 </div>
-
-<div class="card card-section">
-    <div class="section-header bg-majelis">
-        <div><i class="bi bi-building-fill me-2"></i> Hasil Suara Majelis Pusat</div>
-        <span class="badge bg-white text-warning rounded-pill">Total Calon: <?php echo count($stats['majelis']); ?></span>
-    </div>
-    <div class="card-body p-4">
-        <div class="row">
-            <div class="col-lg-4 mb-4 mb-lg-0">
-                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">PERINGKAT & PEROLEHAN SUARA</h6>
-                <div class="scroll-area">
-                    <?php foreach ($stats['majelis'] as $data): ?>
-                        <div class="list-candidate-item <?php echo getWinnerClass($data['jumlah_suara'], $maxMajelis); ?>">
-                            <div>
-                                <div class="fw-bold text-dark"><?php echo htmlspecialchars($data['nama']); ?></div>
-                            </div>
-                            <span class="badge bg-warning text-dark rounded-pill fs-6"><?php echo $data['jumlah_suara']; ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            <div class="col-lg-8">
-                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">VISUALISASI GRAFIK</h6>
-                <div class="chart-wrapper">
-                    <canvas id="chartMajelis"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="card card-section">
-    <div class="section-header bg-bpk">
-        <div><i class="bi bi-calculator-fill me-2"></i> Hasil Suara BPK</div>
-        <span class="badge bg-white text-info rounded-pill">Total Calon: <?php echo count($stats['bpk']); ?></span>
-    </div>
-    <div class="card-body p-4">
-        <div class="row">
-            <div class="col-lg-4 mb-4 mb-lg-0">
-                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">PERINGKAT & PEROLEHAN SUARA</h6>
-                <div class="scroll-area">
-                    <?php foreach ($stats['bpk'] as $data): ?>
-                        <div class="list-candidate-item <?php echo getWinnerClass($data['jumlah_suara'], $maxBpk); ?>">
-                            <div>
-                                <div class="fw-bold text-dark"><?php echo htmlspecialchars($data['nama']); ?></div>
-                            </div>
-                            <span class="badge bg-info text-white rounded-pill fs-6"><?php echo $data['jumlah_suara']; ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            <div class="col-lg-8">
-                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">VISUALISASI GRAFIK</h6>
-                <div class="chart-wrapper">
-                    <canvas id="chartBpk"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        const charts = <?php echo json_encode($chartData, $jsonFlags); ?>;
 
-        // Konfigurasi Grafik (Vertical Bar)
-        const commonOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    },
-                    grid: {
-                        borderDash: [2, 4]
-                    },
-                    title: {
-                        display: true,
-                        text: 'Jumlah Suara'
-                    }
+        Object.keys(charts).forEach(function(id) {
+            const c = charts[id];
+            new Chart(document.getElementById(id), {
+                type: 'bar',
+                data: {
+                    labels: c.labels,
+                    datasets: [{
+                        data: c.data,
+                        // Pemenang berwarna penuh, lainnya lebih pudar
+                        backgroundColor: c.winner.map(w => w ? c.color : c.color + '55'),
+                        borderRadius: 4,
+                        maxBarThickness: 36
+                    }]
                 },
-                x: {
-                    grid: {
-                        display: false
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
                     },
-                    ticks: {
-                        font: {
-                            size: 10
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            },
+                            grid: {
+                                color: '#f1f3f5'
+                            },
+                            border: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Jumlah Suara'
+                            }
                         },
-                        maxRotation: 45, // Nama miring agar muat
-                        minRotation: 45
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            border: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 600
                     }
                 }
-            },
-            animation: {
-                duration: 1000
-            }
-        };
-
-        // 1. PARESES
-        new Chart(document.getElementById('chartPareses'), {
-            type: 'bar',
-            data: {
-                labels: <?php echo $jsParesesLabels; ?>,
-                datasets: [{
-                    data: <?php echo $jsParesesData; ?>,
-                    backgroundColor: '#198754',
-                    borderRadius: 4
-                }]
-            },
-            options: commonOptions
-        });
-
-        // 2. MAJELIS
-        new Chart(document.getElementById('chartMajelis'), {
-            type: 'bar',
-            data: {
-                labels: <?php echo $jsMajelisLabels; ?>,
-                datasets: [{
-                    data: <?php echo $jsMajelisData; ?>,
-                    backgroundColor: '#ffc107',
-                    borderRadius: 4
-                }]
-            },
-            options: commonOptions
-        });
-
-        // 3. BPK
-        new Chart(document.getElementById('chartBpk'), {
-            type: 'bar',
-            data: {
-                labels: <?php echo $jsBpkLabels; ?>,
-                datasets: [{
-                    data: <?php echo $jsBpkData; ?>,
-                    backgroundColor: '#0dcaf0',
-                    borderRadius: 4
-                }]
-            },
-            options: commonOptions
+            });
         });
     });
 </script>
